@@ -1,7 +1,6 @@
-use clap::Parser;
-use aigov::commands;
 use aigov::cli::{Cli, Commands};
-
+use aigov::commands;
+use clap::Parser;
 
 fn main() {
     let args = Cli::parse();

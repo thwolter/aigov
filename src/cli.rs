@@ -19,6 +19,5 @@ pub struct MetadataArgs {
 #[derive(Subcommand)]
 pub enum Commands {
     Inspect,
-    Metadata(MetadataArgs)
+    Metadata(MetadataArgs),
 }
-

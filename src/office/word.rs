@@ -1,5 +1,5 @@
-use crate::office::OfficeDocument;
 use crate::error;
+use crate::office::OfficeDocument;
 
 pub trait WordDocument: OfficeDocument {
     /// Returns the XML content of the document.

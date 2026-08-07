@@ -1,11 +1,7 @@
-use std::path::Path;
 use crate::error::Result;
+use std::path::Path;
 
-use super::{
-    metadata::OfficeMetadata,
-    part::PartName,
-    validation::ValidationIssue,
-};
+use super::{metadata::OfficeMetadata, part::PartName, validation::ValidationIssue};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum OfficeFileType {
@@ -23,7 +19,7 @@ pub trait OfficeDocument {
 
     fn read_part(&self, part: &PartName) -> Result<&[u8]>;
 
-    fn write_part(&mut self, part: PartName, content: Vec<u8>, ) -> Result<()>;
+    fn write_part(&mut self, part: PartName, content: Vec<u8>) -> Result<()>;
 
     fn remove_part(&mut self, part: &PartName) -> Result<()>;
 
@@ -31,7 +27,7 @@ pub trait OfficeDocument {
 
     fn metadata(&self) -> Result<OfficeMetadata>;
 
-    fn set_metadata(&mut self, metadata: OfficeMetadata, ) -> Result<()>;
+    fn set_metadata(&mut self, metadata: OfficeMetadata) -> Result<()>;
 
     fn validate(&self) -> Result<Vec<ValidationIssue>>;
 

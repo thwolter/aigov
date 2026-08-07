@@ -15,10 +15,7 @@ pub struct ValidationIssue {
 }
 
 impl ValidationIssue {
-    pub fn error(
-        part: impl Into<Option<PartName>>,
-        message: impl Into<String>,
-    ) -> Self {
+    pub fn error(part: impl Into<Option<PartName>>, message: impl Into<String>) -> Self {
         Self {
             severity: Severity::Error,
             part: part.into(),
@@ -26,10 +23,7 @@ impl ValidationIssue {
         }
     }
 
-    pub fn warning(
-        part: impl Into<Option<PartName>>,
-        message: impl Into<String>,
-    ) -> Self {
+    pub fn warning(part: impl Into<Option<PartName>>, message: impl Into<String>) -> Self {
         Self {
             severity: Severity::Warning,
             part: part.into(),

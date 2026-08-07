@@ -7,9 +7,7 @@ impl PartName {
     pub fn new(value: impl Into<String>) -> Self {
         let value = value.into();
 
-        let normalized = value
-            .trim_start_matches('/')
-            .replace('\\', "/");
+        let normalized = value.trim_start_matches('/').replace('\\', "/");
 
         Self(normalized)
     }

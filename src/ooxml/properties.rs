@@ -1,7 +1,4 @@
-use crate::{
-    office::OfficeMetadata,
-    error::Result,
-};
+use crate::{error::Result, office::OfficeMetadata};
 
 use quick_xml::{Reader, events::Event};
 
@@ -10,9 +7,7 @@ use super::package::OoxmlPackage;
 const DOC_PROPS_CORE: &str = "docProps/core.xml";
 const DOC_PROPS_APP: &str = "docProps/app.xml";
 
-pub fn read_metadata(
-    package: &OoxmlPackage,
-) -> Result<OfficeMetadata> {
+pub fn read_metadata(package: &OoxmlPackage) -> Result<OfficeMetadata> {
     let mut metadata = OfficeMetadata::default();
 
     if let Ok(core_xml) = package.read_part(&DOC_PROPS_CORE.into()) {
@@ -30,19 +25,12 @@ pub fn write_metadata(package: &mut OoxmlPackage, metadata: &OfficeMetadata) -> 
     let core_xml = create_core_properties(metadata)?;
     let app_xml = create_extended_properties(metadata)?;
 
-    package.write_part(
-        DOC_PROPS_CORE.into(),
-        core_xml,
-    );
+    package.write_part(DOC_PROPS_CORE.into(), core_xml);
 
-    package.write_part(
-        DOC_PROPS_APP.into(),
-        app_xml,
-    );
+    package.write_part(DOC_PROPS_APP.into(), app_xml);
 
     Ok(())
 }
-
 
 fn parse_properties<Property: MetadataProperty>(
     xml: &[u8],
@@ -65,14 +53,11 @@ fn parse_properties<Property: MetadataProperty>(
             }
             Event::Text(text) if property.is_some() => {
                 let text = text.xml10_content().map_err(invalid_property_text)?;
-                let text =
-                    quick_xml::escape::unescape(&text).map_err(invalid_property_text)?;
+                let text = quick_xml::escape::unescape(&text).map_err(invalid_property_text)?;
                 value.push_str(&text);
             }
             Event::GeneralRef(reference) if property.is_some() => {
-                let reference = reference
-                    .xml10_content()
-                    .map_err(invalid_property_text)?;
+                let reference = reference.xml10_content().map_err(invalid_property_text)?;
                 let reference = format!("&{reference};");
                 let reference =
                     quick_xml::escape::unescape(&reference).map_err(invalid_property_text)?;
@@ -187,15 +172,11 @@ impl MetadataProperty for ExtendedProperty {
     }
 }
 
-fn create_core_properties(
-    _metadata: &OfficeMetadata,
-) -> Result<Vec<u8>> {
+fn create_core_properties(_metadata: &OfficeMetadata) -> Result<Vec<u8>> {
     todo!("Create core.xml")
 }
 
-fn create_extended_properties(
-    _metadata: &OfficeMetadata,
-) -> Result<Vec<u8>> {
+fn create_extended_properties(_metadata: &OfficeMetadata) -> Result<Vec<u8>> {
     todo!("Create app.xml")
 }
 
