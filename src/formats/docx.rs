@@ -2,25 +2,16 @@ use std::path::Path;
 
 use crate::{
     error::Result,
-    office::{
-        OfficeDocument,
-        OfficeFileType,
-        OfficeMetadata,
-        PartName,
-        ValidationIssue,
-    },
-    ooxml::{
-        OoxmlPackage,
-        properties,
-    },
+    office::{OfficeDocument, OfficeFileType, OfficeMetadata, PartName, ValidationIssue},
+    ooxml::{OoxmlPackage, properties},
 };
 
 use crate::office::word::WordDocument;
 
 const OFFICE_XML: &str = "word/office.xml";
 const STYLES_XML: &str = "word/styles.xml";
-const CONTENT_XML: &str = "[Content_Types].xml";
-const RELS: &str = "_rels/.rels";
+const CONTENT_TYPES_XML: &str = "[Content_Types].xml";
+const ROOT_RELS: &str = "_rels/.rels";
 
 pub struct DocxDocument {
     package: OoxmlPackage,
@@ -70,16 +61,13 @@ impl OfficeDocument for DocxDocument {
     }
 
     fn set_metadata(&mut self, metadata: OfficeMetadata) -> Result<()> {
-        properties::write_metadata(
-            &mut self.package,
-            &metadata,
-        )
+        properties::write_metadata(&mut self.package, &metadata)
     }
 
     fn validate(&self) -> Result<Vec<ValidationIssue>> {
         let mut issues = Vec::new();
 
-        let required_parts = [CONTENT_XML, RELS, OFFICE_XML];
+        let required_parts = [CONTENT_TYPES_XML, ROOT_RELS, OFFICE_XML];
 
         for required_part in required_parts {
             let part = PartName::new(required_part);
@@ -102,8 +90,7 @@ impl OfficeDocument for DocxDocument {
 
 impl WordDocument for DocxDocument {
     fn document_xml(&self) -> Result<&[u8]> {
-        self.package
-            .read_part(&OFFICE_XML.into())
+        self.package.read_part(&OFFICE_XML.into())
     }
 
     fn styles_xml(&self) -> Result<Option<&[u8]>> {
@@ -126,10 +113,7 @@ impl WordDocument for DocxDocument {
         if count > 0 {
             let updated = xml.replace(search, replacement);
 
-            self.package.write_part(
-                part,
-                updated.into_bytes(),
-            );
+            self.package.write_part(part, updated.into_bytes());
         }
 
         Ok(count)
@@ -140,10 +124,7 @@ impl WordDocument for DocxDocument {
 mod tests {
     use std::io::{Cursor, Write};
 
-    use zip::{
-        ZipWriter,
-        write::SimpleFileOptions,
-    };
+    use zip::{ZipWriter, write::SimpleFileOptions};
 
     use super::*;
 
@@ -160,10 +141,7 @@ mod tests {
         archive.finish().unwrap();
 
         DocxDocument {
-            package: OoxmlPackage::from_bytes(
-                buffer.get_ref(),
-            )
-            .unwrap(),
+            package: OoxmlPackage::from_bytes(buffer.get_ref()).unwrap(),
         }
     }
 
@@ -188,10 +166,7 @@ mod tests {
     fn reports_word_file_type() {
         let document = minimal_docx();
 
-        assert_eq!(
-            OfficeFileType::Word,
-            document.file_type(),
-        );
+        assert_eq!(OfficeFileType::Word, document.file_type(),);
     }
 
     #[test]
@@ -205,10 +180,8 @@ mod tests {
 
     #[test]
     fn validates_missing_required_parts() {
-        let document = docx_document(&[(
-            "word/office.xml",
-            br#"<w:office>Hello world</w:office>"#,
-        )]);
+        let document =
+            docx_document(&[("word/office.xml", br#"<w:office>Hello world</w:office>"#)]);
 
         let issues = document.validate().unwrap();
 
@@ -230,22 +203,10 @@ mod tests {
     #[test]
     fn reads_optional_styles_xml_when_present() {
         let document = docx_document(&[
-            (
-                "[Content_Types].xml",
-                br#"<Types />"#,
-            ),
-            (
-                "_rels/.rels",
-                br#"<Relationships />"#,
-            ),
-            (
-                "word/office.xml",
-                br#"<w:office>Hello world</w:office>"#,
-            ),
-            (
-                "word/styles.xml",
-                br#"<w:styles />"#,
-            ),
+            ("[Content_Types].xml", br#"<Types />"#),
+            ("_rels/.rels", br#"<Relationships />"#),
+            ("word/office.xml", br#"<w:office>Hello world</w:office>"#),
+            ("word/styles.xml", br#"<w:styles />"#),
         ]);
 
         let styles = document.styles_xml().unwrap();
@@ -266,16 +227,11 @@ mod tests {
     fn replaces_text_in_document_xml() {
         let mut document = minimal_docx();
 
-        let count = document
-            .replace_text("Hello", "Goodbye")
-            .unwrap();
+        let count = document.replace_text("Hello", "Goodbye").unwrap();
 
         assert_eq!(1, count);
 
-        let xml = std::str::from_utf8(
-            document.document_xml().unwrap(),
-        )
-        .unwrap();
+        let xml = std::str::from_utf8(document.document_xml().unwrap()).unwrap();
 
         assert!(xml.contains("Goodbye world"));
         assert!(!xml.contains("Hello world"));
@@ -285,16 +241,11 @@ mod tests {
     fn does_not_update_document_xml_when_text_is_missing() {
         let mut document = minimal_docx();
 
-        let count = document
-            .replace_text("Missing", "Replacement")
-            .unwrap();
+        let count = document.replace_text("Missing", "Replacement").unwrap();
 
         assert_eq!(0, count);
 
-        let xml = std::str::from_utf8(
-            document.document_xml().unwrap(),
-        )
-        .unwrap();
+        let xml = std::str::from_utf8(document.document_xml().unwrap()).unwrap();
 
         assert!(xml.contains("Hello world"));
     }
