@@ -87,6 +87,7 @@ impl OoxmlPackage {
             .ok_or_else(|| OfficeError::PartNotFound(part.clone()))
     }
 
+    /// Writes a part to the package.
     pub fn write_part(&mut self, part: PartName, content: Vec<u8>) {
         self.parts.insert(part, content);
     }

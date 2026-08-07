@@ -1,13 +1,21 @@
 use crate::error::{OfficeError, Result};
 use crate::office::OfficeMetadata;
-use quick_xml::{Reader, events::Event};
-
+use quick_xml::{
+    Reader, Writer,
+    events::{BytesEnd, BytesStart, BytesText, Event},
+};
 
 pub trait MetadataProperty: Copy {
+    /// Returns the property for the given local name.
     fn from_local_name(name: &[u8]) -> Option<Self>;
+
+    /// Returns the local name of the property.
     fn local_name(self) -> &'static [u8];
+
+    /// Sets the property value.
     fn set(self, metadata: &mut OfficeMetadata, value: &str);
 
+    /// Parses the property value from the XML.
     fn parse(xml: &[u8], metadata: &mut OfficeMetadata) -> Result<()> {
         let mut reader = Reader::from_reader(xml);
         let mut buffer = Vec::new();
@@ -59,4 +67,17 @@ pub trait MetadataProperty: Copy {
 
 fn invalid_property_text(error: impl std::fmt::Display) -> OfficeError {
     OfficeError::InvalidDocument(format!("Invalid metadata property text: {error}"))
+}
+
+/// Writes a text element to the XML writer.
+pub(super) fn write_text_element(
+    writer: &mut Writer<Vec<u8>>,
+    name: &str,
+    value: &str,
+) -> Result<()> {
+    writer.write_event(Event::Start(BytesStart::new(name)))?;
+    writer.write_event(Event::Text(BytesText::new(value)))?;
+    writer.write_event(Event::End(BytesEnd::new(name)))?;
+
+    Ok(())
 }

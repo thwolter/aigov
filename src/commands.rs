@@ -1,3 +1,3 @@
 mod metadata;
 
-pub use metadata::show_metadata;
+pub use metadata::{set_metadata, show_metadata};

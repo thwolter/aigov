@@ -19,6 +19,9 @@ pub enum OfficeError {
 
     #[error("Invalid Office office: {0}")]
     InvalidDocument(String),
+
+    #[error("Failed to serialize metadata: {0}")]
+    SerializeMetadata(#[from] serde_json::Error),
 }
 
 pub type Result<T> = std::result::Result<T, OfficeError>;

@@ -1,4 +1,8 @@
-use clap::{Args, Parser, Subcommand};
+pub mod metadata;
+pub use metadata::MetadataArgs;
+
+use clap::{Parser, Subcommand};
+
 
 /// Doc comment
 #[derive(Parser)]
@@ -10,14 +14,8 @@ pub struct Cli {
     pub command: Commands,
 }
 
-#[derive(Args)]
-pub struct MetadataArgs {
-    #[arg(short, long)]
-    pub pretty: bool,
-}
-
 #[derive(Subcommand)]
 pub enum Commands {
     Inspect,
-    Metadata(MetadataArgs),
+    Metadata(metadata::MetadataArgs),
 }

@@ -1,4 +1,6 @@
-#[derive(Debug, Clone, Default, PartialEq, Eq)]
+use serde::Serialize;
+
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize)]
 pub struct OfficeMetadata {
     pub title: Option<String>,
     pub subject: Option<String>,
