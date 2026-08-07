@@ -81,3 +81,17 @@ pub(super) fn write_text_element(
 
     Ok(())
 }
+
+pub(super) fn write_timestamp_element(
+    writer: &mut Writer<Vec<u8>>,
+    name: &str,
+    value: &str,
+) -> Result<()> {
+    let mut element = BytesStart::new(name);
+    element.push_attribute(("xsi:type", "dcterms:W3CDTF"));
+    writer.write_event(Event::Start(element))?;
+    writer.write_event(Event::Text(BytesText::new(value)))?;
+    writer.write_event(Event::End(BytesEnd::new(name)))?;
+
+    Ok(())
+}

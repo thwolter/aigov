@@ -5,6 +5,6 @@ pub mod validation;
 pub mod word;
 
 pub use document::{OfficeDocument, OfficeFileType};
-pub use metadata::OfficeMetadata;
+pub use metadata::{HeadingPair, OfficeMetadata};
 pub use part::PartName;
 pub use validation::{Severity, ValidationIssue};

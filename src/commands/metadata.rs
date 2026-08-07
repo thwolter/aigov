@@ -6,9 +6,50 @@ use crate::ooxml::OoxmlPackage;
 use crate::ooxml::properties::{read_metadata, write_metadata};
 
 pub fn show_metadata(filepath: &str, metadata_args: &MetadataArgs) -> Result<()> {
-    println!("Metadata {}:", filepath);
     let package = OoxmlPackage::open(filepath)?;
     let metadata = read_metadata(&package)?;
+    let metadata = serde_json::json!({
+        "core": {
+            "title": &metadata.title,
+            "subject": &metadata.subject,
+            "creator": &metadata.creator,
+            "description": &metadata.description,
+            "keywords": &metadata.keywords,
+            "category": &metadata.category,
+            "content_status": &metadata.content_status,
+            "content_type": &metadata.content_type,
+            "language": &metadata.language,
+            "last_modified_by": &metadata.last_modified_by,
+            "created": &metadata.created,
+            "modified": &metadata.modified,
+            "last_printed": &metadata.last_printed,
+            "revision": &metadata.revision,
+            "identifier": &metadata.identifier,
+            "version": &metadata.version,
+        },
+        "extended": {
+            "application": &metadata.application,
+            "app_version": &metadata.app_version,
+            "template": &metadata.template,
+            "company": &metadata.company,
+            "total_time": &metadata.total_time,
+            "pages": &metadata.pages,
+            "words": &metadata.words,
+            "characters": &metadata.characters,
+            "characters_with_spaces": &metadata.characters_with_spaces,
+            "lines": &metadata.lines,
+            "paragraphs": &metadata.paragraphs,
+            "doc_security": &metadata.doc_security,
+            "scale_crop": &metadata.scale_crop,
+            "links_up_to_date": &metadata.links_up_to_date,
+            "shared_doc": &metadata.shared_doc,
+            "hyperlinks_changed": &metadata.hyperlinks_changed,
+            "heading_pairs": &metadata.heading_pairs,
+            "titles_of_parts": &metadata.titles_of_parts,
+            "dig_sig": &metadata.dig_sig,
+        },
+        "custom": &metadata.custom,
+    });
 
     let stdout = io::stdout();
     let mut out = stdout.lock();
@@ -49,6 +90,24 @@ pub fn set_metadata(filepath: &str, args: &SetArgs) -> Result<()> {
     }
     if let Some(subject) = &args.subject {
         metadata.subject = Some(subject.clone());
+    }
+    if let Some(category) = &args.category {
+        metadata.category = Some(category.clone());
+    }
+    if let Some(content_status) = &args.content_status {
+        metadata.content_status = Some(content_status.clone());
+    }
+    if let Some(content_type) = &args.content_type {
+        metadata.content_type = Some(content_type.clone());
+    }
+    if let Some(language) = &args.language {
+        metadata.language = Some(language.clone());
+    }
+    if let Some(identifier) = &args.identifier {
+        metadata.identifier = Some(identifier.clone());
+    }
+    if let Some(version) = &args.version {
+        metadata.version = Some(version.clone());
     }
 
     write_metadata(&mut package, &metadata)?;

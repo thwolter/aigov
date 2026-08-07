@@ -1,4 +1,4 @@
-use super::parser::{MetadataProperty, write_text_element};
+use super::parser::{MetadataProperty, write_text_element, write_timestamp_element};
 use crate::{error::Result, office::OfficeMetadata, ooxml::package::OoxmlPackage};
 use quick_xml::{
     Writer,
@@ -15,6 +15,16 @@ pub enum CoreProperty {
     LastModifiedBy,
     Description,
     Keywords,
+    Category,
+    ContentStatus,
+    ContentType,
+    Language,
+    Created,
+    Modified,
+    LastPrinted,
+    Revision,
+    Identifier,
+    Version,
 }
 
 impl MetadataProperty for CoreProperty {
@@ -26,6 +36,16 @@ impl MetadataProperty for CoreProperty {
             b"lastModifiedBy" => Some(Self::LastModifiedBy),
             b"description" => Some(Self::Description),
             b"keywords" => Some(Self::Keywords),
+            b"category" => Some(Self::Category),
+            b"contentStatus" => Some(Self::ContentStatus),
+            b"contentType" => Some(Self::ContentType),
+            b"language" => Some(Self::Language),
+            b"created" => Some(Self::Created),
+            b"modified" => Some(Self::Modified),
+            b"lastPrinted" => Some(Self::LastPrinted),
+            b"revision" => Some(Self::Revision),
+            b"identifier" => Some(Self::Identifier),
+            b"version" => Some(Self::Version),
             _ => None,
         }
     }
@@ -38,6 +58,16 @@ impl MetadataProperty for CoreProperty {
             Self::LastModifiedBy => b"lastModifiedBy",
             Self::Description => b"description",
             Self::Keywords => b"keywords",
+            Self::Category => b"category",
+            Self::ContentStatus => b"contentStatus",
+            Self::ContentType => b"contentType",
+            Self::Language => b"language",
+            Self::Created => b"created",
+            Self::Modified => b"modified",
+            Self::LastPrinted => b"lastPrinted",
+            Self::Revision => b"revision",
+            Self::Identifier => b"identifier",
+            Self::Version => b"version",
         }
     }
 
@@ -56,6 +86,16 @@ impl MetadataProperty for CoreProperty {
                     .map(str::to_owned)
                     .collect();
             }
+            Self::Category => metadata.category = Some(value.to_owned()),
+            Self::ContentStatus => metadata.content_status = Some(value.to_owned()),
+            Self::ContentType => metadata.content_type = Some(value.to_owned()),
+            Self::Language => metadata.language = Some(value.to_owned()),
+            Self::Created => metadata.created = Some(value.to_owned()),
+            Self::Modified => metadata.modified = Some(value.to_owned()),
+            Self::LastPrinted => metadata.last_printed = Some(value.to_owned()),
+            Self::Revision => metadata.revision = Some(value.to_owned()),
+            Self::Identifier => metadata.identifier = Some(value.to_owned()),
+            Self::Version => metadata.version = Some(value.to_owned()),
         }
     }
 }
@@ -137,9 +177,54 @@ fn create_core_properties(metadata: &OfficeMetadata) -> Result<Vec<u8>> {
         write_text_element(&mut writer, "cp:keywords", &keywords)?;
     }
 
+    write_optional(&mut writer, "cp:category", metadata.category.as_deref())?;
+    write_optional(
+        &mut writer,
+        "cp:contentStatus",
+        metadata.content_status.as_deref(),
+    )?;
+    write_optional(
+        &mut writer,
+        "cp:contentType",
+        metadata.content_type.as_deref(),
+    )?;
+    write_optional(&mut writer, "dc:language", metadata.language.as_deref())?;
+    write_optional_timestamp(&mut writer, "dcterms:created", metadata.created.as_deref())?;
+    write_optional_timestamp(
+        &mut writer,
+        "dcterms:modified",
+        metadata.modified.as_deref(),
+    )?;
+    write_optional(
+        &mut writer,
+        "cp:lastPrinted",
+        metadata.last_printed.as_deref(),
+    )?;
+    write_optional(&mut writer, "cp:revision", metadata.revision.as_deref())?;
+    write_optional(&mut writer, "dc:identifier", metadata.identifier.as_deref())?;
+    write_optional(&mut writer, "cp:version", metadata.version.as_deref())?;
+
     writer.write_event(Event::End(BytesEnd::new("cp:coreProperties")))?;
 
     Ok(writer.into_inner())
+}
+
+fn write_optional(writer: &mut Writer<Vec<u8>>, name: &str, value: Option<&str>) -> Result<()> {
+    if let Some(value) = value.filter(|value| !value.is_empty()) {
+        write_text_element(writer, name, value)?;
+    }
+    Ok(())
+}
+
+fn write_optional_timestamp(
+    writer: &mut Writer<Vec<u8>>,
+    name: &str,
+    value: Option<&str>,
+) -> Result<()> {
+    if let Some(value) = value.filter(|value| !value.is_empty()) {
+        write_timestamp_element(writer, name, value)?;
+    }
+    Ok(())
 }
 
 #[cfg(test)]
@@ -152,6 +237,16 @@ mod tests {
             title: Some("A & B".into()),
             creator: Some("Jane Doe".into()),
             keywords: vec!["planning".into(), "product".into()],
+            category: Some("Strategy".into()),
+            content_status: Some("Draft".into()),
+            content_type: Some("Report".into()),
+            language: Some("en-US".into()),
+            created: Some("2026-08-07T10:00:00Z".into()),
+            modified: Some("2026-08-07T11:00:00Z".into()),
+            last_printed: Some("2026-08-07T12:00:00Z".into()),
+            revision: Some("3".into()),
+            identifier: Some("report-42".into()),
+            version: Some("1.2".into()),
             ..Default::default()
         };
 
@@ -162,5 +257,15 @@ mod tests {
         assert_eq!(parsed.title, metadata.title);
         assert_eq!(parsed.creator, metadata.creator);
         assert_eq!(parsed.keywords, metadata.keywords);
+        assert_eq!(parsed.category, metadata.category);
+        assert_eq!(parsed.content_status, metadata.content_status);
+        assert_eq!(parsed.content_type, metadata.content_type);
+        assert_eq!(parsed.language, metadata.language);
+        assert_eq!(parsed.created, metadata.created);
+        assert_eq!(parsed.modified, metadata.modified);
+        assert_eq!(parsed.last_printed, metadata.last_printed);
+        assert_eq!(parsed.revision, metadata.revision);
+        assert_eq!(parsed.identifier, metadata.identifier);
+        assert_eq!(parsed.version, metadata.version);
     }
 }
