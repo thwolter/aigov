@@ -1,4 +1,6 @@
 pub mod metadata;
+pub(crate) mod unzip;
+
 pub use metadata::MetadataArgs;
 
 use clap::{Parser, Subcommand};
@@ -10,13 +12,16 @@ pub struct Cli {
     pub filepath: String,
 
     #[command(subcommand)]
-    pub command: Commands,
+    pub command: Option<Commands>,
 }
 
 #[derive(Subcommand)]
 pub enum Commands {
-    Inspect,
-    Metadata(metadata::MetadataArgs),
+    /// Unzip a office document and store its contents.
+    Unzip(unzip::UnzipArgs),
+
+    /// Set/show metadata for a office document.
+    Metadata(Box<metadata::MetadataArgs>),
 }
 
 #[cfg(test)]

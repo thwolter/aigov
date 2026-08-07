@@ -1,16 +1,17 @@
 use aigov::Result;
 use aigov::cli::{Cli, Commands, metadata::MetadataCommand};
 use aigov::commands;
+use aigov::commands::unzip_document;
 use clap::{CommandFactory, Parser};
 
 fn main() {
     let args = Cli::parse();
     let result: Result<()> = match &args.command {
-        Commands::Inspect => {
-            println!("inspect");
-            Ok(())
+        None => print_help(),
+        Some(Commands::Unzip(unzip_args)) => {
+            unzip_document(&args.filepath, unzip_args)
         }
-        Commands::Metadata(metadata_args) => match &metadata_args.command {
+        Some(Commands::Metadata(metadata_args)) => match &metadata_args.command {
             None => commands::show_metadata(&args.filepath, metadata_args),
             Some(MetadataCommand::Set(set_args)) if set_args.is_empty() => print_set_help(),
             Some(MetadataCommand::Set(set_args)) => {
@@ -23,6 +24,13 @@ fn main() {
         eprintln!("error: {error}");
         std::process::exit(1);
     }
+}
+
+fn print_help() -> Result<()> {
+    let mut command = Cli::command();
+    command.print_help()?;
+    println!();
+    Ok(())
 }
 
 fn print_set_help() -> Result<()> {

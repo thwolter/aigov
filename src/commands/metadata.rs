@@ -1,9 +1,9 @@
-use std::io::{self, IsTerminal};
+use std::io::{self};
 
-use crate::Result;
 use crate::cli::{MetadataArgs, metadata::SetArgs};
 use crate::ooxml::OoxmlPackage;
 use crate::ooxml::properties::{read_metadata, write_metadata};
+use crate::Result;
 
 pub fn show_metadata(filepath: &str, metadata_args: &MetadataArgs) -> Result<()> {
     let package = OoxmlPackage::open(filepath)?;
@@ -113,12 +113,8 @@ pub fn set_metadata(filepath: &str, args: &SetArgs) -> Result<()> {
     write_metadata(&mut package, &metadata)?;
     package.save(std::path::Path::new(filepath))?;
 
-    let message = format!("Metadata updated: {filepath}");
-    if io::stdout().is_terminal() {
-        println!("\x1b[32m✓ {message}\x1b[0m");
-    } else {
-        println!("✓ {message}");
-    }
+    super::print_success(filepath, "Metadata updated");
 
     Ok(())
 }
+
