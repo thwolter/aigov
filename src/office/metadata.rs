@@ -51,17 +51,17 @@ pub struct OfficeMetadata {
 #[derive(Debug, Default, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct MetadataPatch {
-    pub title: Option<String>,
-    pub description: Option<String>,
-    pub creator: Option<String>,
-    #[serde(deserialize_with = "deserialize_keywords")]
-    pub keywords: Option<Vec<String>>,
-    pub subject: Option<String>,
     pub category: Option<String>,
     pub content_status: Option<String>,
     pub content_type: Option<String>,
-    pub language: Option<String>,
+    pub creator: Option<String>,
+    pub description: Option<String>,
     pub identifier: Option<String>,
+    #[serde(deserialize_with = "deserialize_keywords")]
+    pub keywords: Option<Vec<String>>,
+    pub language: Option<String>,
+    pub subject: Option<String>,
+    pub title: Option<String>,
     pub version: Option<String>,
 }
 
@@ -97,16 +97,16 @@ impl MetadataPatch {
     }
 
     pub fn apply_to(self, metadata: &mut OfficeMetadata) -> Result<()> {
-        metadata.title = self.title.or(metadata.title.clone());
-        metadata.description = self.description.or(metadata.description.clone());
-        metadata.creator = self.creator.or(metadata.creator.clone());
-        metadata.keywords = self.keywords.unwrap_or(metadata.keywords.clone());
-        metadata.subject = self.subject.or(metadata.subject.clone());
         metadata.category = self.category.or(metadata.category.clone());
         metadata.content_status = self.content_status.or(metadata.content_status.clone());
         metadata.content_type = self.content_type.or(metadata.content_type.clone());
-        metadata.language = self.language.or(metadata.language.clone());
+        metadata.creator = self.creator.or(metadata.creator.clone());
+        metadata.description = self.description.or(metadata.description.clone());
         metadata.identifier = self.identifier.or(metadata.identifier.clone());
+        metadata.keywords = self.keywords.unwrap_or(metadata.keywords.clone());
+        metadata.language = self.language.or(metadata.language.clone());
+        metadata.subject = self.subject.or(metadata.subject.clone());
+        metadata.title = self.title.or(metadata.title.clone());
         metadata.version = self.version.or(metadata.version.clone());
 
         Ok(())
