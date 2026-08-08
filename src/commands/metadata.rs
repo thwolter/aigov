@@ -1,15 +1,15 @@
 use crate::Result;
 use crate::cli::{MetadataArgs, metadata::SetArgs};
 use crate::office::metadata::MetadataPatch;
+use crate::ooxml;
 use crate::ooxml::OoxmlPackage;
-use crate::ooxml::properties::{read_metadata, write_metadata};
 use std::fs::read_to_string;
 use std::io::{self};
 use std::path::Path;
 
 pub fn show_metadata(filepath: &Path, metadata_args: &MetadataArgs) -> Result<()> {
     let package = OoxmlPackage::open(filepath)?;
-    let metadata = read_metadata(&package)?;
+    let metadata = ooxml::read_metadata(&package)?;
     let metadata = serde_json::json!({
         "core": {
             "title": &metadata.title,
@@ -68,7 +68,7 @@ pub fn show_metadata(filepath: &Path, metadata_args: &MetadataArgs) -> Result<()
 
 pub fn set_metadata(filepath: &Path, args: &SetArgs) -> Result<()> {
     let mut package = OoxmlPackage::open(filepath)?;
-    let mut metadata = read_metadata(&package)?;
+    let mut metadata = ooxml::read_metadata(&package)?;
 
     if let Some(profile) = &args.profile {
         let json = read_to_string(profile)?;
@@ -76,7 +76,7 @@ pub fn set_metadata(filepath: &Path, args: &SetArgs) -> Result<()> {
     }
     MetadataPatch::from(args).apply_to(&mut metadata)?;
 
-    write_metadata(&mut package, &metadata)?;
+    ooxml::write_metadata(&mut package, &metadata)?;
     package.save(Path::new(filepath))?;
 
     let filepath = filepath.to_string_lossy();
