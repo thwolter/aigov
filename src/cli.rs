@@ -1,5 +1,6 @@
 pub mod metadata;
-pub(crate) mod unzip;
+pub mod unzip;
+pub mod pdf;
 
 use std::path::PathBuf;
 pub use metadata::MetadataArgs;
@@ -23,6 +24,9 @@ pub enum Commands {
 
     /// Set/show metadata for a office document.
     Metadata(Box<metadata::MetadataArgs>),
+
+    /// Convert a office document to PDF.
+    Pdf(pdf::PdfArgs),
 }
 
 #[cfg(test)]

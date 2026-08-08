@@ -22,6 +22,9 @@ pub enum OfficeError {
 
     #[error("Failed to serialize metadata: {0}")]
     SerializeMetadata(#[from] serde_json::Error),
+
+    #[error("Conversion error: {0}")]
+    Conversion(String),
 }
 
 pub type Result<T> = std::result::Result<T, OfficeError>;

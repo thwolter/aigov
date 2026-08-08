@@ -1,10 +1,12 @@
 mod metadata;
 mod unzip;
+mod pdf;
 
 use std::io;
 use std::io::IsTerminal;
 pub use metadata::{set_metadata, show_metadata};
 pub use unzip::unzip_document;
+pub use pdf::convert_to_pdf;
 
 fn print_success(message: impl std::fmt::Display) {
     if io::stdout().is_terminal() {

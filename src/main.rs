@@ -1,6 +1,7 @@
 use aigov::Result;
 use aigov::cli::{Cli, Commands, metadata::MetadataCommand};
 use aigov::commands::{
+    convert_to_pdf,
     set_metadata,
     show_metadata,
     unzip_document,
@@ -21,6 +22,9 @@ fn main() {
                 set_metadata(&args.filepath, set_args)
             }
         },
+        Some(Commands::Pdf(pdf_args)) => {
+            convert_to_pdf(&args.filepath, pdf_args)
+        }
     };
 
     if let Err(error) = result {
