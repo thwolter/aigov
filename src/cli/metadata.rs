@@ -1,5 +1,6 @@
 use crate::office::metadata::MetadataPatch;
 use clap::{Args, Subcommand};
+use std::collections::BTreeMap;
 use std::path::PathBuf;
 
 #[derive(Args)]
@@ -49,17 +50,30 @@ pub struct SetArgs {
     #[arg(long = "content-type")]
     pub content_type: Option<String>,
 
-    #[arg(long)]
+    #[arg(long, short)]
     pub language: Option<String>,
 
-    #[arg(long)]
+    #[arg(long, short)]
     pub identifier: Option<String>,
 
     #[arg(long, short)]
     pub version: Option<String>,
 
+    #[arg(long, value_name = "NAME=VALUE", value_parser = parse_custom_property)]
+    pub custom: Vec<(String, String)>,
+
     #[arg(long, short)]
     pub profile: Option<PathBuf>,
+}
+
+fn parse_custom_property(value: &str) -> std::result::Result<(String, String), String> {
+    let Some((name, value)) = value.split_once('=') else {
+        return Err("must be in NAME=VALUE form".into());
+    };
+    if name.is_empty() {
+        return Err("property name cannot be empty".into());
+    }
+    Ok((name.into(), value.into()))
 }
 
 impl SetArgs {
@@ -76,6 +90,7 @@ impl SetArgs {
             && self.language.is_none()
             && self.identifier.is_none()
             && self.version.is_none()
+            && self.custom.is_empty()
             && self.profile.is_none()
     }
 }
@@ -101,33 +116,58 @@ impl From<&SetArgs> for MetadataPatch {
             language: args.language.clone(),
             identifier: args.identifier.clone(),
             version: args.version.clone(),
+            custom: (!args.custom.is_empty())
+                .then(|| args.custom.iter().cloned().collect::<BTreeMap<_, _>>()),
         }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::SetArgs;
+    use super::{MetadataPatch, SetArgs};
 
     #[test]
     fn detects_an_empty_update() {
-        assert!(
-            SetArgs {
-                title: None,
-                description: None,
-                author: None,
-                keywords: None,
-                creator: None,
-                subject: None,
-                category: None,
-                content_status: None,
-                content_type: None,
-                language: None,
-                identifier: None,
-                version: None,
-                profile: None,
-            }
-                .is_empty()
-        );
+        assert!(SetArgs {
+            title: None,
+            description: None,
+            author: None,
+            keywords: None,
+            creator: None,
+            subject: None,
+            category: None,
+            content_status: None,
+            content_type: None,
+            language: None,
+            identifier: None,
+            version: None,
+            custom: Vec::new(),
+            profile: None,
+        }
+            .is_empty());
+    }
+
+    #[test]
+    fn converts_custom_properties_to_a_metadata_patch() {
+        let args = SetArgs {
+            title: None,
+            description: None,
+            author: None,
+            keywords: None,
+            creator: None,
+            subject: None,
+            category: None,
+            content_status: None,
+            content_type: None,
+            language: None,
+            identifier: None,
+            version: None,
+            custom: vec![("Client".into(), "Acme".into())],
+            profile: None,
+        };
+
+        let patch = MetadataPatch::from(&args);
+
+        assert_eq!(patch.custom.unwrap()["Client"], "Acme");
     }
 }

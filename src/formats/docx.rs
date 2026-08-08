@@ -249,4 +249,33 @@ mod tests {
 
         assert!(xml.contains("Hello world"));
     }
+
+    #[test]
+    fn writes_and_registers_custom_metadata() {
+        let mut document = minimal_docx();
+        let mut metadata = OfficeMetadata::default();
+        metadata.custom.insert("Client".into(), "Acme & Co".into());
+
+        document.set_metadata(metadata).unwrap();
+
+        let custom = std::str::from_utf8(
+            document
+                .read_part(&PartName::from("docProps/custom.xml"))
+                .unwrap(),
+        )
+            .unwrap();
+        let content_types = std::str::from_utf8(
+            document
+                .read_part(&PartName::from("[Content_Types].xml"))
+                .unwrap(),
+        )
+            .unwrap();
+        let relationships =
+            std::str::from_utf8(document.read_part(&PartName::from("_rels/.rels")).unwrap())
+                .unwrap();
+
+        assert!(custom.contains("Acme &amp; Co"));
+        assert!(content_types.contains("/docProps/custom.xml"));
+        assert!(relationships.contains("custom-properties"));
+    }
 }

@@ -55,9 +55,10 @@ pub struct MetadataPatch {
     pub content_status: Option<String>,
     pub content_type: Option<String>,
     pub creator: Option<String>,
+    pub custom: Option<BTreeMap<String, String>>,
     pub description: Option<String>,
     pub identifier: Option<String>,
-    #[serde(deserialize_with = "deserialize_keywords")]
+    #[serde(default, deserialize_with = "deserialize_keywords")]
     pub keywords: Option<Vec<String>>,
     pub language: Option<String>,
     pub subject: Option<String>,
@@ -101,6 +102,7 @@ impl MetadataPatch {
         metadata.content_status = self.content_status.or(metadata.content_status.clone());
         metadata.content_type = self.content_type.or(metadata.content_type.clone());
         metadata.creator = self.creator.or(metadata.creator.clone());
+        metadata.custom.extend(self.custom.unwrap_or_default());
         metadata.description = self.description.or(metadata.description.clone());
         metadata.identifier = self.identifier.or(metadata.identifier.clone());
         metadata.keywords = self.keywords.unwrap_or(metadata.keywords.clone());
@@ -115,7 +117,7 @@ impl MetadataPatch {
 
 #[cfg(test)]
 mod tests {
-    use super::MetadataPatch;
+    use super::{MetadataPatch, OfficeMetadata};
 
     #[test]
     fn accepts_comma_separated_profile_keywords() {
@@ -132,5 +134,17 @@ mod tests {
         let patch = MetadataPatch::from_json(r#"{"keywords":["test","profile"]}"#).unwrap();
 
         assert_eq!(patch.keywords, Some(vec!["test".into(), "profile".into()]));
+    }
+
+    #[test]
+    fn applies_custom_profile_properties_without_removing_existing_ones() {
+        let patch = MetadataPatch::from_json(r#"{"custom":{"Client":"Acme"}}"#).unwrap();
+        let mut metadata = OfficeMetadata::default();
+        metadata.custom.insert("Owner".into(), "Ada".into());
+
+        patch.apply_to(&mut metadata).unwrap();
+
+        assert_eq!(metadata.custom["Client"], "Acme");
+        assert_eq!(metadata.custom["Owner"], "Ada");
     }
 }

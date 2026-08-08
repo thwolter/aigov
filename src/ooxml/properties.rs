@@ -19,6 +19,7 @@ pub fn read_metadata(package: &OoxmlPackage) -> Result<OfficeMetadata> {
 pub fn write_metadata(package: &mut OoxmlPackage, metadata: &OfficeMetadata) -> Result<()> {
     core::write_to(package, metadata)?;
     extended::write_to(package, metadata)?;
+    custom::write_to(package, metadata)?;
 
     Ok(())
 }
