@@ -1,8 +1,8 @@
 use crate::Result;
 use crate::cli::{MetadataArgs, metadata::SetArgs};
-use crate::office::metadata::MetadataPatch;
-use crate::ooxml;
-use crate::ooxml::OoxmlPackage;
+use aigov::metadata::MetadataPatch;
+use aigov::ooxml;
+use aigov::ooxml::OoxmlPackage;
 use std::fs::read_to_string;
 use std::io::{self};
 use std::path::Path;

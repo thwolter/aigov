@@ -1,7 +1,10 @@
+mod cli;
+mod commands;
+
 use aigov::Result;
-use aigov::cli::{Cli, Commands, metadata::MetadataCommand};
-use aigov::commands::{convert_to_pdf, set_metadata, show_metadata, unzip_document};
 use clap::{CommandFactory, Parser};
+use cli::{Cli, Commands, metadata::MetadataCommand};
+use commands::{convert_to_pdf, set_metadata, show_metadata, unzip_document};
 
 fn main() {
     let args = Cli::parse();

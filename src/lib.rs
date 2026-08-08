@@ -1,9 +1,7 @@
-pub mod commands;
 pub mod error;
 mod formats;
 mod office;
-mod ooxml;
-
-pub mod cli;
+pub mod ooxml;
 
 pub use error::{OfficeError, Result};
+pub use office::metadata;

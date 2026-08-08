@@ -1,6 +1,5 @@
-use crate::OfficeError;
 use crate::cli::pdf::PdfArgs;
-use crate::error::Result;
+use aigov::error::{OfficeError, Result};
 use std::path::Path;
 use std::process::Command;
 
