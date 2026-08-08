@@ -1,7 +1,10 @@
 use aigov::Result;
 use aigov::cli::{Cli, Commands, metadata::MetadataCommand};
-use aigov::commands;
-use aigov::commands::unzip_document;
+use aigov::commands::{
+    set_metadata,
+    show_metadata,
+    unzip_document,
+};
 use clap::{CommandFactory, Parser};
 
 fn main() {
@@ -12,10 +15,10 @@ fn main() {
             unzip_document(&args.filepath, unzip_args)
         }
         Some(Commands::Metadata(metadata_args)) => match &metadata_args.command {
-            None => commands::show_metadata(&args.filepath, metadata_args),
+            None => show_metadata(&args.filepath, metadata_args),
             Some(MetadataCommand::Set(set_args)) if set_args.is_empty() => print_set_help(),
             Some(MetadataCommand::Set(set_args)) => {
-                commands::set_metadata(&args.filepath, set_args)
+                set_metadata(&args.filepath, set_args)
             }
         },
     };

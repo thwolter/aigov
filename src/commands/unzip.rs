@@ -5,7 +5,7 @@ use std::{fs, io};
 use zip::ZipArchive;
 
 /// Unzip a office and store its contents in a subfolder
-pub fn unzip_document(filepath: &str, args: &UnzipArgs) -> crate::Result<()> {
+pub fn unzip_document(filepath: &Path, args: &UnzipArgs) -> crate::Result<()> {
     let file = File::open(filepath)?;
     let mut archive = ZipArchive::new(file)?;
     let document_path = Path::new(filepath);
@@ -37,7 +37,8 @@ pub fn unzip_document(filepath: &str, args: &UnzipArgs) -> crate::Result<()> {
         }
     }
 
-    super::print_success(filepath, "Package unzipped");
+    let filepath = filepath.to_string_lossy();
+    super::print_success(format!("Package unziped: {filepath}"));
 
     Ok(())
 }

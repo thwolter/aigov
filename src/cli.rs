@@ -1,6 +1,7 @@
 pub mod metadata;
 pub(crate) mod unzip;
 
+use std::path::PathBuf;
 pub use metadata::MetadataArgs;
 
 use clap::{Parser, Subcommand};
@@ -9,7 +10,7 @@ use clap::{Parser, Subcommand};
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
 pub struct Cli {
-    pub filepath: String,
+    pub filepath: PathBuf,
 
     #[command(subcommand)]
     pub command: Option<Commands>,
