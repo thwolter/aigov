@@ -9,7 +9,8 @@ pub fn convert_to_pdf(filepath: &Path, args: &PdfArgs) -> Result<()> {
     let status = Command::new("soffice")
         .args([
             "--headless",
-            "--convert-to", "pdf",
+            "--convert-to",
+            "pdf",
             "--outdir",
             output_dir.to_str().unwrap(),
             filepath.to_str().unwrap(),

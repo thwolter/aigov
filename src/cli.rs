@@ -1,9 +1,9 @@
 pub mod metadata;
-pub mod unzip;
 pub mod pdf;
+pub mod unzip;
 
-use std::path::PathBuf;
 pub use metadata::MetadataArgs;
+use std::path::PathBuf;
 
 use clap::{Parser, Subcommand};
 

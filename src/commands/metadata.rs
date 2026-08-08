@@ -1,7 +1,9 @@
 use crate::Result;
 use crate::cli::{MetadataArgs, metadata::SetArgs};
+use crate::office::metadata::MetadataPatch;
 use crate::ooxml::OoxmlPackage;
 use crate::ooxml::properties::{read_metadata, write_metadata};
+use std::fs::read_to_string;
 use std::io::{self};
 use std::path::Path;
 
@@ -68,47 +70,11 @@ pub fn set_metadata(filepath: &Path, args: &SetArgs) -> Result<()> {
     let mut package = OoxmlPackage::open(filepath)?;
     let mut metadata = read_metadata(&package)?;
 
-    if let Some(title) = &args.title {
-        metadata.title = Some(title.clone());
+    if let Some(profile) = &args.profile {
+        let json = read_to_string(profile)?;
+        MetadataPatch::from_json(&json)?.apply_to(&mut metadata)?;
     }
-    if let Some(description) = &args.description {
-        metadata.description = Some(description.clone());
-    }
-    if let Some(author) = &args.author {
-        metadata.creator = Some(author.clone());
-    }
-    if let Some(creator) = &args.creator {
-        metadata.creator = Some(creator.clone());
-    }
-    if let Some(keywords) = &args.keywords {
-        metadata.keywords = keywords
-            .split(',')
-            .map(str::trim)
-            .filter(|keyword| !keyword.is_empty())
-            .map(str::to_owned)
-            .collect();
-    }
-    if let Some(subject) = &args.subject {
-        metadata.subject = Some(subject.clone());
-    }
-    if let Some(category) = &args.category {
-        metadata.category = Some(category.clone());
-    }
-    if let Some(content_status) = &args.content_status {
-        metadata.content_status = Some(content_status.clone());
-    }
-    if let Some(content_type) = &args.content_type {
-        metadata.content_type = Some(content_type.clone());
-    }
-    if let Some(language) = &args.language {
-        metadata.language = Some(language.clone());
-    }
-    if let Some(identifier) = &args.identifier {
-        metadata.identifier = Some(identifier.clone());
-    }
-    if let Some(version) = &args.version {
-        metadata.version = Some(version.clone());
-    }
+    MetadataPatch::from(args).apply_to(&mut metadata)?;
 
     write_metadata(&mut package, &metadata)?;
     package.save(Path::new(filepath))?;
@@ -118,4 +84,3 @@ pub fn set_metadata(filepath: &Path, args: &SetArgs) -> Result<()> {
 
     Ok(())
 }
-

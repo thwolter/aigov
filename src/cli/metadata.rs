@@ -1,4 +1,6 @@
+use crate::office::metadata::MetadataPatch;
 use clap::{Args, Subcommand};
+use std::path::PathBuf;
 
 #[derive(Args)]
 pub struct MetadataArgs {
@@ -55,6 +57,9 @@ pub struct SetArgs {
 
     #[arg(long, short)]
     pub version: Option<String>,
+
+    #[arg(long, short)]
+    pub profile: Option<PathBuf>,
 }
 
 impl SetArgs {
@@ -71,6 +76,32 @@ impl SetArgs {
             && self.language.is_none()
             && self.identifier.is_none()
             && self.version.is_none()
+            && self.profile.is_none()
+    }
+}
+
+impl From<&SetArgs> for MetadataPatch {
+    fn from(args: &SetArgs) -> Self {
+        Self {
+            title: args.title.clone(),
+            description: args.description.clone(),
+            creator: args.creator.clone().or_else(|| args.author.clone()),
+            keywords: args.keywords.as_deref().map(|keywords| {
+                keywords
+                    .split(',')
+                    .map(str::trim)
+                    .filter(|keyword| !keyword.is_empty())
+                    .map(str::to_owned)
+                    .collect()
+            }),
+            subject: args.subject.clone(),
+            category: args.category.clone(),
+            content_status: args.content_status.clone(),
+            content_type: args.content_type.clone(),
+            language: args.language.clone(),
+            identifier: args.identifier.clone(),
+            version: args.version.clone(),
+        }
     }
 }
 
@@ -94,6 +125,7 @@ mod tests {
                 language: None,
                 identifier: None,
                 version: None,
+                profile: None,
             }
                 .is_empty()
         );
