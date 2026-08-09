@@ -1,1 +1,2 @@
-mod docx;
+pub mod docx;
+pub mod factory;

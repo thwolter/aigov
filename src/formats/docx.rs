@@ -1,13 +1,14 @@
 use std::path::Path;
 
 use crate::{
-    error::Result,
     document::ValidationIssue,
-    office::{OfficeDocument, OfficeFileType, OfficeMetadata},
+    error::Result,
+    office::OfficeDocument,
+    office::metadata::OfficeMetadata,
+    office::word::WordDocument,
+    ooxml,
     package::{OoxmlPackage, PartName},
 };
-
-use crate::office::word::WordDocument;
 
 const OFFICE_XML: &str = "word/office.xml";
 const STYLES_XML: &str = "word/styles.xml";
@@ -19,16 +20,26 @@ pub struct DocxDocument {
 }
 
 impl DocxDocument {
-    pub fn open(path: impl AsRef<Path>) -> Result<Self> {
-        Ok(Self {
-            package: OoxmlPackage::open(path)?,
-        })
+    pub fn document_xml(&self) -> Result<&[u8]> {
+        self.package.read_part(&OFFICE_XML.into())
+    }
+
+    pub fn styles_xml(&self) -> Result<Option<&[u8]>> {
+        let part = PartName::new(STYLES_XML);
+
+        if self.package.contains_part(&part) {
+            Ok(Some(self.package.read_part(&part)?))
+        } else {
+            Ok(None)
+        }
     }
 }
 
 impl OfficeDocument for DocxDocument {
-    fn file_type(&self) -> OfficeFileType {
-        OfficeFileType::Word
+    fn open(path: &Path) -> Result<Self> {
+        Ok(Self {
+            package: OoxmlPackage::open(path)?,
+        })
     }
 
     fn source_path(&self) -> Option<&Path> {
@@ -57,6 +68,14 @@ impl OfficeDocument for DocxDocument {
         self.package.contains_part(part)
     }
 
+    fn metadata(&self) -> Result<OfficeMetadata> {
+        ooxml::read_metadata(&self.package)
+    }
+
+    fn set_metadata(&mut self, metadata: &OfficeMetadata) -> Result<()> {
+        ooxml::write_metadata(&mut self.package, metadata)
+    }
+
     fn validate(&self) -> Result<Vec<ValidationIssue>> {
         let mut issues = Vec::new();
 
@@ -82,20 +101,6 @@ impl OfficeDocument for DocxDocument {
 }
 
 impl WordDocument for DocxDocument {
-    fn document_xml(&self) -> Result<&[u8]> {
-        self.package.read_part(&OFFICE_XML.into())
-    }
-
-    fn styles_xml(&self) -> Result<Option<&[u8]>> {
-        let part = PartName::new(STYLES_XML);
-
-        if self.package.contains_part(&part) {
-            Ok(Some(self.package.read_part(&part)?))
-        } else {
-            Ok(None)
-        }
-    }
-
     fn replace_text(&mut self, search: &str, replacement: &str) -> Result<usize> {
         let part = PartName::new(OFFICE_XML);
         let xml = self.package.read_part(&part)?;
@@ -153,13 +158,6 @@ mod tests {
                 br#"<?xml version="1.0" encoding="UTF-8"?><w:office>Hello world</w:office>"#,
             ),
         ])
-    }
-
-    #[test]
-    fn reports_word_file_type() {
-        let document = minimal_docx();
-
-        assert_eq!(OfficeFileType::Word, document.file_type(),);
     }
 
     #[test]
@@ -249,20 +247,20 @@ mod tests {
         let mut metadata = OfficeMetadata::default();
         metadata.custom.insert("Client".into(), "Acme & Co".into());
 
-        document.set_metadata(metadata).unwrap();
+        document.set_metadata(&metadata).unwrap();
 
         let custom = std::str::from_utf8(
             document
                 .read_part(&PartName::from("docProps/custom.xml"))
                 .unwrap(),
         )
-            .unwrap();
+        .unwrap();
         let content_types = std::str::from_utf8(
             document
                 .read_part(&PartName::from("[Content_Types].xml"))
                 .unwrap(),
         )
-            .unwrap();
+        .unwrap();
         let relationships =
             std::str::from_utf8(document.read_part(&PartName::from("_rels/.rels")).unwrap())
                 .unwrap();

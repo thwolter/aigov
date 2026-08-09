@@ -1,13 +1,13 @@
 use crate::error;
 use crate::office::OfficeDocument;
 
+// Common operations on Word-processing documents.
+///
+/// This trait is format-independent. DOCX, DOCM, and legacy DOC
+/// implementations can provide their own backend.
 pub trait WordDocument: OfficeDocument {
-    /// Returns the XML content of the document.
-    fn document_xml(&self) -> error::Result<&[u8]>;
-
-    /// Returns the XML content of the styles.
-    fn styles_xml(&self) -> error::Result<Option<&[u8]>>;
-
-    /// Replaces all occurrences of `search` with `replacement` in the document.
+    /// Replaces all occurrences of `search` with `replacement`.
+    ///
+    /// Returns the number of replacements made.
     fn replace_text(&mut self, search: &str, replacement: &str) -> error::Result<usize>;
 }

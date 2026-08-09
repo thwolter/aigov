@@ -1,19 +1,14 @@
+use crate::document::ValidationIssue;
 use crate::error::Result;
-use std::path::Path;
-
 use crate::package::PartName;
+use std::path::Path;
 
 use super::metadata::OfficeMetadata;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum OfficeFileType {
-    Word,
-    Excel,
-    PowerPoint,
-}
-
 pub trait OfficeDocument {
-    fn file_type(&self) -> OfficeFileType;
+    fn open(path: &Path) -> Result<Self>
+    where
+        Self: Sized;
 
     fn source_path(&self) -> Option<&Path>;
 
@@ -29,9 +24,9 @@ pub trait OfficeDocument {
 
     fn metadata(&self) -> Result<OfficeMetadata>;
 
-    fn set_metadata(&mut self, metadata: OfficeMetadata) -> Result<()>;
+    fn set_metadata(&mut self, metadata: &OfficeMetadata) -> Result<()>;
 
-    // fn validate(&self) -> Result<Vec<ValidationIssue>>;
+    fn validate(&self) -> Result<Vec<ValidationIssue>>;
 
     fn save(&self, destination: &Path) -> Result<()>;
 }
