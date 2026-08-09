@@ -4,7 +4,8 @@ use crate::{
     ooxml::package::OoxmlPackage,
 };
 
-use super::parser::{MetadataProperty, write_text_element};
+
+use crate::ooxml::xml::{TextElement, parse_text_elements, write_text_element};
 use quick_xml::{
     Reader, Writer,
     events::{BytesDecl, BytesEnd, BytesStart, BytesText, Event},
@@ -12,92 +13,49 @@ use quick_xml::{
 
 pub const DOC_PROPS_APP: &str = "docProps/app.xml";
 
-#[derive(Clone, Copy)]
-pub enum ExtendedProperty {
-    Application,
-    AppVersion,
-    Template,
-    Company,
-    TotalTime,
-    Pages,
-    Words,
-    Characters,
-    CharactersWithSpaces,
-    Lines,
-    Paragraphs,
-    DocSecurity,
-    ScaleCrop,
-    LinksUpToDate,
-    SharedDoc,
-    HyperlinksChanged,
-    DigSig,
+/// Reads extended properties from the document package.
+pub(super) fn read_from(package: &OoxmlPackage, metadata: &mut OfficeMetadata) -> Result<()> {
+    let Ok(xml) = package.read_part(&DOC_PROPS_APP.into()) else {
+        return Ok(())
+    };
+    
+    apply_properties(parse_text_elements(xml)?, metadata);
+    read_vectors(xml, metadata)?;
+    Ok(())
 }
 
-impl MetadataProperty for ExtendedProperty {
-    fn from_local_name(name: &[u8]) -> Option<Self> {
-        match name {
-            b"Application" => Some(Self::Application),
-            b"AppVersion" => Some(Self::AppVersion),
-            b"Template" => Some(Self::Template),
-            b"Company" => Some(Self::Company),
-            b"TotalTime" => Some(Self::TotalTime),
-            b"Pages" => Some(Self::Pages),
-            b"Words" => Some(Self::Words),
-            b"Characters" => Some(Self::Characters),
-            b"CharactersWithSpaces" => Some(Self::CharactersWithSpaces),
-            b"Lines" => Some(Self::Lines),
-            b"Paragraphs" => Some(Self::Paragraphs),
-            b"DocSecurity" => Some(Self::DocSecurity),
-            b"ScaleCrop" => Some(Self::ScaleCrop),
-            b"LinksUpToDate" => Some(Self::LinksUpToDate),
-            b"SharedDoc" => Some(Self::SharedDoc),
-            b"HyperlinksChanged" => Some(Self::HyperlinksChanged),
-            b"DigSig" => Some(Self::DigSig),
-            _ => None,
-        }
-    }
+fn apply_properties(properties: Vec<TextElement>, metadata: &mut OfficeMetadata) {
+    for TextElement { name, value } in properties {
+        match name.as_slice() {
+            b"Application" => metadata.application = Some(value),
+            b"AppVersion" => metadata.app_version = Some(value),
+            b"Template" => metadata.template = Some(value),
+            b"Company" => metadata.company = Some(value),
 
-    fn local_name(self) -> &'static [u8] {
-        match self {
-            Self::Application => b"Application",
-            Self::AppVersion => b"AppVersion",
-            Self::Template => b"Template",
-            Self::Company => b"Company",
-            Self::TotalTime => b"TotalTime",
-            Self::Pages => b"Pages",
-            Self::Words => b"Words",
-            Self::Characters => b"Characters",
-            Self::CharactersWithSpaces => b"CharactersWithSpaces",
-            Self::Lines => b"Lines",
-            Self::Paragraphs => b"Paragraphs",
-            Self::DocSecurity => b"DocSecurity",
-            Self::ScaleCrop => b"ScaleCrop",
-            Self::LinksUpToDate => b"LinksUpToDate",
-            Self::SharedDoc => b"SharedDoc",
-            Self::HyperlinksChanged => b"HyperlinksChanged",
-            Self::DigSig => b"DigSig",
-        }
-    }
+            b"TotalTime" => metadata.total_time = value.parse().ok(),
+            b"Pages" => metadata.pages = value.parse().ok(),
+            b"Words" => metadata.words = value.parse().ok(),
+            b"Characters" => metadata.characters = value.parse().ok(),
+            b"CharactersWithSpaces" => {
+                metadata.characters_with_spaces = value.parse().ok()
+            }
+            b"Lines" => metadata.lines = value.parse().ok(),
+            b"Paragraphs" => metadata.paragraphs = value.parse().ok(),
+            b"DocSecurity" => metadata.doc_security = value.parse().ok(),
 
-    fn set(self, metadata: &mut OfficeMetadata, value: &str) {
-        match self {
-            Self::Application => metadata.application = Some(value.to_owned()),
-            Self::AppVersion => metadata.app_version = Some(value.to_owned()),
-            Self::Template => metadata.template = Some(value.to_owned()),
-            Self::Company => metadata.company = Some(value.to_owned()),
-            Self::TotalTime => metadata.total_time = value.parse().ok(),
-            Self::Pages => metadata.pages = value.parse().ok(),
-            Self::Words => metadata.words = value.parse().ok(),
-            Self::Characters => metadata.characters = value.parse().ok(),
-            Self::CharactersWithSpaces => metadata.characters_with_spaces = value.parse().ok(),
-            Self::Lines => metadata.lines = value.parse().ok(),
-            Self::Paragraphs => metadata.paragraphs = value.parse().ok(),
-            Self::DocSecurity => metadata.doc_security = value.parse().ok(),
-            Self::ScaleCrop => metadata.scale_crop = parse_bool(value),
-            Self::LinksUpToDate => metadata.links_up_to_date = parse_bool(value),
-            Self::SharedDoc => metadata.shared_doc = parse_bool(value),
-            Self::HyperlinksChanged => metadata.hyperlinks_changed = parse_bool(value),
-            Self::DigSig => metadata.dig_sig = Some(value.to_owned()),
+            b"ScaleCrop" => metadata.scale_crop = parse_bool(&value),
+            b"LinksUpToDate" => {
+                metadata.links_up_to_date = parse_bool(&value)
+            }
+            b"SharedDoc" => metadata.shared_doc = parse_bool(&value),
+            b"HyperlinksChanged" => {
+                metadata.hyperlinks_changed = parse_bool(&value)
+            }
+
+            b"DigSig" => metadata.dig_sig = Some(value),
+
+            // HeadingPairs and TitlesOfParts are handled separately.
+            _ => {}
         }
     }
 }
@@ -108,15 +66,6 @@ fn parse_bool(value: &str) -> Option<bool> {
         "false" | "0" => Some(false),
         _ => None,
     }
-}
-
-/// Reads extended properties from the document package.
-pub(super) fn read_from(package: &OoxmlPackage, metadata: &mut OfficeMetadata) -> Result<()> {
-    if let Ok(app_xml) = package.read_part(&DOC_PROPS_APP.into()) {
-        ExtendedProperty::parse(app_xml, metadata)?;
-        read_vectors(app_xml, metadata)?;
-    }
-    Ok(())
 }
 
 fn read_vectors(xml: &[u8], metadata: &mut OfficeMetadata) -> Result<()> {
@@ -356,7 +305,7 @@ mod tests {
 
         let xml = create_extended_properties(&metadata).unwrap();
         let mut parsed = OfficeMetadata::default();
-        ExtendedProperty::parse(&xml, &mut parsed).unwrap();
+        apply_properties(parse_text_elements(&xml).unwrap(), &mut parsed);
         read_vectors(&xml, &mut parsed).unwrap();
 
         assert_eq!(parsed, metadata);

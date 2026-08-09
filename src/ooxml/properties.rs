@@ -1,7 +1,6 @@
 mod core;
 mod custom;
 mod extended;
-mod parser;
 
 use super::package::OoxmlPackage;
 use crate::{
@@ -29,8 +28,7 @@ pub fn write_metadata(package: &mut OoxmlPackage, metadata: &OfficeMetadata) -> 
 
 #[cfg(test)]
 mod tests {
-    use super::{core::CoreProperty, extended::ExtendedProperty, parser::MetadataProperty};
-    use crate::metadata::OfficeMetadata;
+    use crate::ooxml::xml::parse_text_elements;
 
     #[test]
     fn parses_core_properties() {
@@ -46,16 +44,20 @@ mod tests {
                 <cp:keywords>planning, product, 2026</cp:keywords>
             </cp:coreProperties>
         "#;
-        let mut metadata = OfficeMetadata::default();
+        let properties = parse_text_elements(xml).unwrap();
 
-        CoreProperty::parse(xml, &mut metadata).unwrap();
-
-        assert_eq!(metadata.title.as_deref(), Some("A & B"));
-        assert_eq!(metadata.subject.as_deref(), Some("Roadmap"));
-        assert_eq!(metadata.creator.as_deref(), Some("Jane Doe"));
-        assert_eq!(metadata.last_modified_by.as_deref(), Some("John Doe"));
-        assert_eq!(metadata.description.as_deref(), Some("Plan <draft>"));
-        assert_eq!(metadata.keywords, ["planning", "product", "2026"]);
+        assert_eq!(properties[0].name, b"title");
+        assert_eq!(properties[0].value, "A & B");
+        assert_eq!(properties[1].name, b"subject");
+        assert_eq!(properties[1].value, "Roadmap");
+        assert_eq!(properties[2].name, b"creator");
+        assert_eq!(properties[2].value, "Jane Doe");
+        assert_eq!(properties[3].name, b"lastModifiedBy");
+        assert_eq!(properties[3].value, "John Doe");
+        assert_eq!(properties[4].name, b"description");
+        assert_eq!(properties[4].value, "Plan <draft>");
+        assert_eq!(properties[5].name, b"keywords");
+        assert_eq!(properties[5].value, "planning, product, 2026");
     }
 
     #[test]
@@ -66,10 +68,13 @@ mod tests {
                 <Company>Acme &amp; Co</Company>
             </Properties>
         "#;
-        let mut metadata = OfficeMetadata::default();
+        let properties = parse_text_elements(xml).unwrap();
 
-        ExtendedProperty::parse(xml, &mut metadata).unwrap();
+        let company = properties
+            .iter()
+            .find(|property| property.name == b"Company")
+            .expect("Company property");
 
-        assert_eq!(metadata.company.as_deref(), Some("Acme & Co"));
+        assert_eq!(company.value, "Acme & Co");
     }
 }

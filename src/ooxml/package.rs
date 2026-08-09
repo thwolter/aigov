@@ -7,6 +7,7 @@ use std::{
 };
 use zip::{ZipArchive, ZipWriter, write::SimpleFileOptions};
 
+use super::{content_types, relationships};
 use crate::{
     error::{OfficeError, Result},
     office::PartName,
@@ -85,6 +86,38 @@ impl OoxmlPackage {
             .get(part)
             .map(Vec::as_slice)
             .ok_or_else(|| OfficeError::PartNotFound(part.clone()))
+    }
+
+    pub(crate) fn ensure_content_type_override(
+        &mut self,
+        part_name: &str,
+        content_type: &str,
+    ) -> Result<()> {
+        let part = PartName::from(content_types::PART_NAME);
+        let xml = self.read_part(&part)?.to_vec();
+        let updated = content_types::ensure_override(&xml, part_name, content_type)?;
+
+        self.write_part(part, updated);
+        Ok(())
+    }
+
+    pub(crate) fn ensure_root_relationship(
+        &mut self,
+        id: &str,
+        relationship_type: &str,
+        target: &str,
+    ) -> Result<()> {
+        let part = PartName::from(relationships::PART_NAME);
+        let xml = self.read_part(&part)?.to_vec();
+        let updated = relationships::ensure_relationship(
+            &xml,
+            id,
+            relationship_type,
+            target,
+        )?;
+
+        self.write_part(part, updated);
+        Ok(())
     }
 
     /// Writes a part to the package.

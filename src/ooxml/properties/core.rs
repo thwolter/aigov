@@ -1,13 +1,6 @@
-use super::parser::{
-    MetadataProperty,
-    write_text_element,
-    write_timestamp_element,
-};
-use crate::{
-    error::Result,
-    office::metadata::OfficeMetadata,
-    ooxml::package::OoxmlPackage,
-};
+use crate::ooxml::xml::{TextElement, parse_text_elements, write_text_element};
+use crate::{error::Result, office::metadata::OfficeMetadata, ooxml::package::OoxmlPackage};
+use quick_xml::events::BytesText;
 use quick_xml::{
     Writer,
     events::{BytesDecl, BytesEnd, BytesStart, Event},
@@ -15,78 +8,25 @@ use quick_xml::{
 
 pub const DOC_PROPS_CORE: &str = "docProps/core.xml";
 
-#[derive(Clone, Copy)]
-pub enum CoreProperty {
-    Title,
-    Subject,
-    Creator,
-    LastModifiedBy,
-    Description,
-    Keywords,
-    Category,
-    ContentStatus,
-    ContentType,
-    Language,
-    Created,
-    Modified,
-    LastPrinted,
-    Revision,
-    Identifier,
-    Version,
+/// Reads core properties from the document package.
+pub(super) fn read_from(package: &OoxmlPackage, metadata: &mut OfficeMetadata) -> Result<()> {
+    let Ok(xml) = package.read_part(&DOC_PROPS_CORE.into()) else {
+        return Ok(())
+    };
+    apply_properties(parse_text_elements(xml)?, metadata);
+    Ok(())
 }
 
-impl MetadataProperty for CoreProperty {
-    fn from_local_name(name: &[u8]) -> Option<Self> {
-        match name {
-            b"title" => Some(Self::Title),
-            b"subject" => Some(Self::Subject),
-            b"creator" => Some(Self::Creator),
-            b"lastModifiedBy" => Some(Self::LastModifiedBy),
-            b"description" => Some(Self::Description),
-            b"keywords" => Some(Self::Keywords),
-            b"category" => Some(Self::Category),
-            b"contentStatus" => Some(Self::ContentStatus),
-            b"contentType" => Some(Self::ContentType),
-            b"language" => Some(Self::Language),
-            b"created" => Some(Self::Created),
-            b"modified" => Some(Self::Modified),
-            b"lastPrinted" => Some(Self::LastPrinted),
-            b"revision" => Some(Self::Revision),
-            b"identifier" => Some(Self::Identifier),
-            b"version" => Some(Self::Version),
-            _ => None,
-        }
-    }
+fn apply_properties(properties: Vec<TextElement>, metadata: &mut OfficeMetadata) {
+    for TextElement { name, value } in properties {
+        match name.as_slice() {
+            b"title" => metadata.title = Some(value),
+            b"subject" => metadata.subject = Some(value),
+            b"creator" => metadata.creator = Some(value),
+            b"lastModifiedBy" => metadata.last_modified_by = Some(value),
+            b"description" => metadata.description = Some(value),
 
-    fn local_name(self) -> &'static [u8] {
-        match self {
-            Self::Title => b"title",
-            Self::Subject => b"subject",
-            Self::Creator => b"creator",
-            Self::LastModifiedBy => b"lastModifiedBy",
-            Self::Description => b"description",
-            Self::Keywords => b"keywords",
-            Self::Category => b"category",
-            Self::ContentStatus => b"contentStatus",
-            Self::ContentType => b"contentType",
-            Self::Language => b"language",
-            Self::Created => b"created",
-            Self::Modified => b"modified",
-            Self::LastPrinted => b"lastPrinted",
-            Self::Revision => b"revision",
-            Self::Identifier => b"identifier",
-            Self::Version => b"version",
-        }
-    }
-
-    fn set(self, metadata: &mut OfficeMetadata, value: &str) {
-        match self {
-            Self::Title => metadata.title = Some(value.to_owned()),
-            Self::Subject => metadata.subject = Some(value.to_owned()),
-            Self::Creator => metadata.creator = Some(value.to_owned()),
-            Self::LastModifiedBy => metadata.last_modified_by = Some(value.to_owned()),
-            Self::Description => metadata.description = Some(value.to_owned()),
-            Self::Keywords => {
+            b"keywords" => {
                 metadata.keywords = value
                     .split(',')
                     .map(str::trim)
@@ -94,32 +34,27 @@ impl MetadataProperty for CoreProperty {
                     .map(str::to_owned)
                     .collect();
             }
-            Self::Category => metadata.category = Some(value.to_owned()),
-            Self::ContentStatus => metadata.content_status = Some(value.to_owned()),
-            Self::ContentType => metadata.content_type = Some(value.to_owned()),
-            Self::Language => metadata.language = Some(value.to_owned()),
-            Self::Created => metadata.created = Some(value.to_owned()),
-            Self::Modified => metadata.modified = Some(value.to_owned()),
-            Self::LastPrinted => metadata.last_printed = Some(value.to_owned()),
-            Self::Revision => metadata.revision = Some(value.to_owned()),
-            Self::Identifier => metadata.identifier = Some(value.to_owned()),
-            Self::Version => metadata.version = Some(value.to_owned()),
+
+            b"category" => metadata.category = Some(value),
+            b"contentStatus" => metadata.content_status = Some(value),
+            b"contentType" => metadata.content_type = Some(value),
+            b"language" => metadata.language = Some(value),
+            b"created" => metadata.created = Some(value),
+            b"modified" => metadata.modified = Some(value),
+            b"lastPrinted" => metadata.last_printed = Some(value),
+            b"revision" => metadata.revision = Some(value),
+            b"identifier" => metadata.identifier = Some(value),
+            b"version" => metadata.version = Some(value),
+
+            // Unknown core properties are intentionally ignored.
+            _ => {}
         }
     }
 }
 
-/// Reads core properties from the document package.
-pub(super) fn read_from(package: &OoxmlPackage, metadata: &mut OfficeMetadata) -> Result<()> {
-    if let Ok(core_xml) = package.read_part(&DOC_PROPS_CORE.into()) {
-        CoreProperty::parse(core_xml, metadata)?;
-    }
-    Ok(())
-}
-
 /// Writes core properties to the document package.
 pub(super) fn write_to(package: &mut OoxmlPackage, metadata: &OfficeMetadata) -> Result<()> {
-    let core_xml = create_core_properties(metadata)?;
-    package.write_part(DOC_PROPS_CORE.into(), core_xml);
+    package.write_part(DOC_PROPS_CORE.into(), create_core_properties(metadata)?);
     Ok(())
 }
 
@@ -260,7 +195,7 @@ mod tests {
 
         let xml = create_core_properties(&metadata).unwrap();
         let mut parsed = OfficeMetadata::default();
-        CoreProperty::parse(&xml, &mut parsed).unwrap();
+        apply_properties(parse_text_elements(&xml).unwrap(), &mut parsed);
 
         assert_eq!(parsed.title, metadata.title);
         assert_eq!(parsed.creator, metadata.creator);
@@ -276,4 +211,19 @@ mod tests {
         assert_eq!(parsed.identifier, metadata.identifier);
         assert_eq!(parsed.version, metadata.version);
     }
+}
+
+/// Writes a timestamp element to the XML writer.
+pub(in crate::ooxml::properties) fn write_timestamp_element(
+    writer: &mut Writer<Vec<u8>>,
+    name: &str,
+    value: &str,
+) -> Result<()> {
+    let mut element = BytesStart::new(name);
+    element.push_attribute(("xsi:type", "dcterms:W3CDTF"));
+    writer.write_event(Event::Start(element))?;
+    writer.write_event(Event::Text(BytesText::new(value)))?;
+    writer.write_event(Event::End(BytesEnd::new(name)))?;
+
+    Ok(())
 }
