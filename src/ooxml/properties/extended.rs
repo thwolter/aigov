@@ -300,7 +300,6 @@ mod tests {
                 }],
                 titles_of_parts: vec!["Introduction".into()],
                 dig_sig: Some("signed".into()),
-                ..Default::default()
             },
             ..Default::default()
         };

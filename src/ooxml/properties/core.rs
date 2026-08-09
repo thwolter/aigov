@@ -163,6 +163,21 @@ fn write_optional_timestamp(
     Ok(())
 }
 
+/// Writes a timestamp element to the XML writer.
+pub(in crate::ooxml::properties) fn write_timestamp_element(
+    writer: &mut Writer<Vec<u8>>,
+    name: &str,
+    value: &str,
+) -> Result<()> {
+    let mut element = BytesStart::new(name);
+    element.push_attribute(("xsi:type", "dcterms:W3CDTF"));
+    writer.write_event(Event::Start(element))?;
+    writer.write_event(Event::Text(BytesText::new(value)))?;
+    writer.write_event(Event::End(BytesEnd::new(name)))?;
+
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use crate::office::metadata::CoreMetadata;
@@ -197,19 +212,4 @@ mod tests {
 
         assert_eq!(parsed.core, metadata.core);
     }
-}
-
-/// Writes a timestamp element to the XML writer.
-pub(in crate::ooxml::properties) fn write_timestamp_element(
-    writer: &mut Writer<Vec<u8>>,
-    name: &str,
-    value: &str,
-) -> Result<()> {
-    let mut element = BytesStart::new(name);
-    element.push_attribute(("xsi:type", "dcterms:W3CDTF"));
-    writer.write_event(Event::Start(element))?;
-    writer.write_event(Event::Text(BytesText::new(value)))?;
-    writer.write_event(Event::End(BytesEnd::new(name)))?;
-
-    Ok(())
 }
