@@ -128,23 +128,25 @@ mod tests {
 
     #[test]
     fn detects_an_empty_update() {
-        assert!(SetArgs {
-            title: None,
-            description: None,
-            author: None,
-            keywords: None,
-            creator: None,
-            subject: None,
-            category: None,
-            content_status: None,
-            content_type: None,
-            language: None,
-            identifier: None,
-            version: None,
-            custom: Vec::new(),
-            profile: None,
-        }
-            .is_empty());
+        assert!(
+            SetArgs {
+                title: None,
+                description: None,
+                author: None,
+                keywords: None,
+                creator: None,
+                subject: None,
+                category: None,
+                content_status: None,
+                content_type: None,
+                language: None,
+                identifier: None,
+                version: None,
+                custom: Vec::new(),
+                profile: None,
+            }
+            .is_empty()
+        );
     }
 
     #[test]

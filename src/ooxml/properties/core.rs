@@ -1,9 +1,5 @@
 use crate::ooxml::xml::{TextElement, parse_text_elements, write_text_element};
-use crate::{
-    error::Result,
-    office::metadata::OfficeMetadata,
-    package::OoxmlPackage,
-};
+use crate::{error::Result, office::metadata::OfficeMetadata, package::OoxmlPackage};
 use quick_xml::events::BytesText;
 use quick_xml::{
     Writer,
@@ -15,7 +11,7 @@ pub const DOC_PROPS_CORE: &str = "docProps/core.xml";
 /// Reads core properties from the document package.
 pub(super) fn read_from(package: &OoxmlPackage, metadata: &mut OfficeMetadata) -> Result<()> {
     let Ok(xml) = package.read_part(&DOC_PROPS_CORE.into()) else {
-        return Ok(())
+        return Ok(());
     };
     apply_properties(parse_text_elements(xml)?, metadata);
     Ok(())
@@ -89,7 +85,8 @@ fn create_core_properties(metadata: &OfficeMetadata) -> Result<Vec<u8>> {
     }
 
     if let Some(subject) = metadata
-        .core.subject
+        .core
+        .subject
         .as_deref()
         .filter(|value| !value.is_empty())
     {
@@ -97,7 +94,8 @@ fn create_core_properties(metadata: &OfficeMetadata) -> Result<Vec<u8>> {
     }
 
     if let Some(creator) = metadata
-        .core.creator
+        .core
+        .creator
         .as_deref()
         .filter(|value| !value.is_empty())
     {
@@ -105,7 +103,8 @@ fn create_core_properties(metadata: &OfficeMetadata) -> Result<Vec<u8>> {
     }
 
     if let Some(last_modified_by) = metadata
-        .core.last_modified_by
+        .core
+        .last_modified_by
         .as_deref()
         .filter(|value| !value.is_empty())
     {
@@ -113,7 +112,8 @@ fn create_core_properties(metadata: &OfficeMetadata) -> Result<Vec<u8>> {
     }
 
     if let Some(description) = metadata
-        .core.description
+        .core
+        .description
         .as_deref()
         .filter(|value| !value.is_empty())
     {
@@ -131,23 +131,11 @@ fn create_core_properties(metadata: &OfficeMetadata) -> Result<Vec<u8>> {
         "cp:contentStatus",
         core.content_status.as_deref(),
     )?;
-    write_optional(
-        &mut writer,
-        "cp:contentType",
-        core.content_type.as_deref(),
-    )?;
+    write_optional(&mut writer, "cp:contentType", core.content_type.as_deref())?;
     write_optional(&mut writer, "dc:language", core.language.as_deref())?;
     write_optional_timestamp(&mut writer, "dcterms:created", core.created.as_deref())?;
-    write_optional_timestamp(
-        &mut writer,
-        "dcterms:modified",
-        core.modified.as_deref(),
-    )?;
-    write_optional(
-        &mut writer,
-        "cp:lastPrinted",
-        core.last_printed.as_deref(),
-    )?;
+    write_optional_timestamp(&mut writer, "dcterms:modified", core.modified.as_deref())?;
+    write_optional(&mut writer, "cp:lastPrinted", core.last_printed.as_deref())?;
     write_optional(&mut writer, "cp:revision", core.revision.as_deref())?;
     write_optional(&mut writer, "dc:identifier", core.identifier.as_deref())?;
     write_optional(&mut writer, "cp:version", core.version.as_deref())?;
@@ -185,20 +173,20 @@ mod tests {
     fn creates_core_properties() {
         let metadata = OfficeMetadata {
             core: CoreMetadata {
-            title: Some("A & B".into()),
-            creator: Some("Jane Doe".into()),
-            keywords: vec!["planning".into(), "product".into()],
-            category: Some("Strategy".into()),
-            content_status: Some("Draft".into()),
-            content_type: Some("Report".into()),
-            language: Some("en-US".into()),
-            created: Some("2026-08-07T10:00:00Z".into()),
-            modified: Some("2026-08-07T11:00:00Z".into()),
-            last_printed: Some("2026-08-07T12:00:00Z".into()),
-            revision: Some("3".into()),
-            identifier: Some("report-42".into()),
-            version: Some("1.2".into()),
-            ..Default::default()
+                title: Some("A & B".into()),
+                creator: Some("Jane Doe".into()),
+                keywords: vec!["planning".into(), "product".into()],
+                category: Some("Strategy".into()),
+                content_status: Some("Draft".into()),
+                content_type: Some("Report".into()),
+                language: Some("en-US".into()),
+                created: Some("2026-08-07T10:00:00Z".into()),
+                modified: Some("2026-08-07T11:00:00Z".into()),
+                last_printed: Some("2026-08-07T12:00:00Z".into()),
+                revision: Some("3".into()),
+                identifier: Some("report-42".into()),
+                version: Some("1.2".into()),
+                ..Default::default()
             },
             ..Default::default()
         };

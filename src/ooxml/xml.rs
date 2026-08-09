@@ -35,11 +35,7 @@ pub(in crate::ooxml) fn parse_text_elements(xml: &[u8]) -> crate::Result<Vec<Tex
 
                 // The root element is at depth 1. Parse its children.
                 if depth > 1 && current.is_none() {
-                    current = Some((
-                        element.local_name().as_ref().to_vec(),
-                        String::new(),
-                        depth,
-                    ));
+                    current = Some((element.local_name().as_ref().to_vec(), String::new(), depth));
                 }
             }
 
@@ -51,12 +47,9 @@ pub(in crate::ooxml) fn parse_text_elements(xml: &[u8]) -> crate::Result<Vec<Tex
             }
 
             Event::Text(text) if current.is_some() => {
-                let text = text
-                    .xml10_content()
-                    .map_err(invalid_property_text)?;
+                let text = text.xml10_content().map_err(invalid_property_text)?;
 
-                let text = quick_xml::escape::unescape(&text)
-                    .map_err(invalid_property_text)?;
+                let text = quick_xml::escape::unescape(&text).map_err(invalid_property_text)?;
 
                 if let Some((_, value, _)) = current.as_mut() {
                     value.push_str(&text);
@@ -64,13 +57,11 @@ pub(in crate::ooxml) fn parse_text_elements(xml: &[u8]) -> crate::Result<Vec<Tex
             }
 
             Event::GeneralRef(reference) if current.is_some() => {
-                let reference = reference
-                    .xml10_content()
-                    .map_err(invalid_property_text)?;
+                let reference = reference.xml10_content().map_err(invalid_property_text)?;
 
                 let reference = format!("&{reference};");
-                let reference = quick_xml::escape::unescape(&reference)
-                .map_err(invalid_property_text)?;
+                let reference =
+                    quick_xml::escape::unescape(&reference).map_err(invalid_property_text)?;
 
                 if let Some((_, value, _)) = current.as_mut() {
                     value.push_str(&reference);
@@ -78,9 +69,7 @@ pub(in crate::ooxml) fn parse_text_elements(xml: &[u8]) -> crate::Result<Vec<Tex
             }
 
             Event::CData(text) if current.is_some() => {
-                let text = text
-                    .xml10_content()
-                    .map_err(invalid_property_text)?;
+                let text = text.xml10_content().map_err(invalid_property_text)?;
 
                 if let Some((_, value, _)) = current.as_mut() {
                     value.push_str(&text);

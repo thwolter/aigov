@@ -37,35 +37,39 @@ mod tests {
 
     #[test]
     fn metadata_set_accepts_editable_fields_only() {
-        assert!(Cli::try_parse_from([
-            "aigov",
-            "report.docx",
-            "metadata",
-            "set",
-            "--category",
-            "Strategy",
-            "--content-status",
-            "Draft",
-            "--language",
-            "en-US",
-            "--custom",
-            "Client=Acme",
-            "--custom",
-            "Classification=Internal",
-        ])
-            .is_ok());
         assert!(
-            Cli::try_parse_from(["aigov", "report.docx", "metadata", "set", "--pages", "3", ])
+            Cli::try_parse_from([
+                "aigov",
+                "report.docx",
+                "metadata",
+                "set",
+                "--category",
+                "Strategy",
+                "--content-status",
+                "Draft",
+                "--language",
+                "en-US",
+                "--custom",
+                "Client=Acme",
+                "--custom",
+                "Classification=Internal",
+            ])
+            .is_ok()
+        );
+        assert!(
+            Cli::try_parse_from(["aigov", "report.docx", "metadata", "set", "--pages", "3",])
                 .is_err()
         );
-        assert!(Cli::try_parse_from([
-            "aigov",
-            "report.docx",
-            "metadata",
-            "set",
-            "--custom",
-            "missing"
-        ])
-            .is_err());
+        assert!(
+            Cli::try_parse_from([
+                "aigov",
+                "report.docx",
+                "metadata",
+                "set",
+                "--custom",
+                "missing"
+            ])
+            .is_err()
+        );
     }
 }

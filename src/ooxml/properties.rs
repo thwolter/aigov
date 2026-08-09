@@ -2,11 +2,7 @@ mod core;
 mod custom;
 mod extended;
 
-use crate::{
-    error::Result,
-    office::metadata::OfficeMetadata,
-    package::OoxmlPackage,
-};
+use crate::{error::Result, office::metadata::OfficeMetadata, package::OoxmlPackage};
 
 /// Reads core, extended, and custom metadata from an OOXML package.
 ///

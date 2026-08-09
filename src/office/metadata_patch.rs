@@ -1,5 +1,5 @@
-use crate::error::Result;
 use super::metadata::OfficeMetadata;
+use crate::error::Result;
 use serde::{Deserialize, Deserializer};
 use std::collections::BTreeMap;
 
@@ -83,9 +83,7 @@ impl MetadataPatch {
     /// Custom properties are merged rather than replacing the complete map.
     pub fn apply_to(self, metadata: &mut OfficeMetadata) -> Result<()> {
         metadata.core.category = self.category.or(metadata.core.category.clone());
-        metadata.core.content_status = self
-            .content_status
-            .or(metadata.core.content_status.clone());
+        metadata.core.content_status = self.content_status.or(metadata.core.content_status.clone());
         metadata.core.content_type = self.content_type.or(metadata.core.content_type.clone());
         metadata.core.creator = self.creator.or(metadata.core.creator.clone());
         metadata.custom.extend(self.custom.unwrap_or_default());
@@ -107,7 +105,10 @@ mod tests {
     #[test]
     fn accepts_comma_separated_profile_keywords() {
         let patch = MetadataPatch::from_json(r#"{"keywords":"test, profile, office"}"#).unwrap();
-        assert_eq!(patch.keywords, Some(vec!["test".into(), "profile".into(), "office".into()]));
+        assert_eq!(
+            patch.keywords,
+            Some(vec!["test".into(), "profile".into(), "office".into()])
+        );
     }
 
     #[test]

@@ -1,5 +1,5 @@
-use crate::Result;
 use super::insert_before_closing_tag;
+use crate::Result;
 
 pub(crate) const PART_NAME: &str = "_rels/.rels";
 
@@ -12,9 +12,7 @@ pub(crate) fn ensure_relationship(
     insert_before_closing_tag(
         xml,
         "</Relationships>",
-        &format!(
-            "<Relationship Id=\"{id}\" Type=\"{relationship_type}\" Target=\"{target}\"/>"
-        ),
+        &format!("<Relationship Id=\"{id}\" Type=\"{relationship_type}\" Target=\"{target}\"/>"),
         &format!("Type=\"{relationship_type}\""),
     )
 }

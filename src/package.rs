@@ -7,9 +7,7 @@ use std::{
 };
 use zip::{ZipArchive, ZipWriter, write::SimpleFileOptions};
 
-use crate::{
-    error::{OfficeError, Result},
-};
+use crate::error::{OfficeError, Result};
 
 mod content_types;
 mod part;
@@ -150,12 +148,7 @@ impl OoxmlPackage {
     ) -> Result<()> {
         let part = PartName::from(relationships::PART_NAME);
         let xml = self.read_part(&part)?.to_vec();
-        let updated = relationships::ensure_relationship(
-            &xml,
-            id,
-            relationship_type,
-            target,
-        )?;
+        let updated = relationships::ensure_relationship(&xml, id, relationship_type, target)?;
 
         self.write_part(part, updated);
         Ok(())

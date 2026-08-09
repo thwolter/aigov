@@ -4,7 +4,6 @@ use crate::{
     package::OoxmlPackage,
 };
 
-
 use crate::ooxml::xml::{TextElement, parse_text_elements, write_text_element};
 use quick_xml::{
     Reader, Writer,
@@ -16,9 +15,9 @@ pub const DOC_PROPS_APP: &str = "docProps/app.xml";
 /// Reads extended properties from the document package.
 pub(super) fn read_from(package: &OoxmlPackage, metadata: &mut OfficeMetadata) -> Result<()> {
     let Ok(xml) = package.read_part(&DOC_PROPS_APP.into()) else {
-        return Ok(())
+        return Ok(());
     };
-    
+
     apply_properties(parse_text_elements(xml)?, metadata);
     read_vectors(xml, metadata)?;
     Ok(())
@@ -44,13 +43,9 @@ fn apply_properties(properties: Vec<TextElement>, metadata: &mut OfficeMetadata)
             b"DocSecurity" => metadata.extended.doc_security = value.parse().ok(),
 
             b"ScaleCrop" => metadata.extended.scale_crop = parse_bool(&value),
-            b"LinksUpToDate" => {
-                metadata.extended.links_up_to_date = parse_bool(&value)
-            }
+            b"LinksUpToDate" => metadata.extended.links_up_to_date = parse_bool(&value),
             b"SharedDoc" => metadata.extended.shared_doc = parse_bool(&value),
-            b"HyperlinksChanged" => {
-                metadata.extended.hyperlinks_changed = parse_bool(&value)
-            }
+            b"HyperlinksChanged" => metadata.extended.hyperlinks_changed = parse_bool(&value),
 
             b"DigSig" => metadata.extended.dig_sig = Some(value),
 
@@ -96,36 +91,36 @@ fn read_vectors(xml: &[u8], metadata: &mut OfficeMetadata) -> Result<()> {
                 }
             }
             Event::End(element)
-            if property == Some("HeadingPairs")
-                && element.local_name().as_ref() == b"HeadingPairs" =>
-                {
-                    if values.len() % 2 != 0 {
-                        return Err(OfficeError::InvalidDocument(
-                            "HeadingPairs must contain name/count pairs".into(),
-                        ));
-                    }
-                    metadata.extended.heading_pairs = values
-                        .chunks_exact(2)
-                        .map(|pair| {
-                            Ok(HeadingPair {
-                                name: pair[0].clone(),
-                                count: pair[1].parse().map_err(|_| {
-                                    OfficeError::InvalidDocument(
-                                        "HeadingPairs count must be an unsigned integer".into(),
-                                    )
-                                })?,
-                            })
+                if property == Some("HeadingPairs")
+                    && element.local_name().as_ref() == b"HeadingPairs" =>
+            {
+                if values.len() % 2 != 0 {
+                    return Err(OfficeError::InvalidDocument(
+                        "HeadingPairs must contain name/count pairs".into(),
+                    ));
+                }
+                metadata.extended.heading_pairs = values
+                    .chunks_exact(2)
+                    .map(|pair| {
+                        Ok(HeadingPair {
+                            name: pair[0].clone(),
+                            count: pair[1].parse().map_err(|_| {
+                                OfficeError::InvalidDocument(
+                                    "HeadingPairs count must be an unsigned integer".into(),
+                                )
+                            })?,
                         })
-                        .collect::<Result<_>>()?;
-                    property = None;
-                }
+                    })
+                    .collect::<Result<_>>()?;
+                property = None;
+            }
             Event::End(element)
-            if property == Some("TitlesOfParts")
-                && element.local_name().as_ref() == b"TitlesOfParts" =>
-                {
-                    metadata.extended.titles_of_parts = std::mem::take(&mut values);
-                    property = None;
-                }
+                if property == Some("TitlesOfParts")
+                    && element.local_name().as_ref() == b"TitlesOfParts" =>
+            {
+                metadata.extended.titles_of_parts = std::mem::take(&mut values);
+                property = None;
+            }
             Event::Eof => break,
             _ => {}
         }
@@ -283,29 +278,29 @@ mod tests {
     fn creates_extended_properties() {
         let metadata = OfficeMetadata {
             extended: ExtendedMetadata {
-            application: Some("Microsoft Word".into()),
-            app_version: Some("16.0".into()),
-            template: Some("Normal.dotm".into()),
-            company: Some("Acme & Co".into()),
-            total_time: Some(42),
-            pages: Some(3),
-            words: Some(1200),
-            characters: Some(6000),
-            characters_with_spaces: Some(7200),
-            lines: Some(80),
-            paragraphs: Some(12),
-            doc_security: Some(0),
-            scale_crop: Some(true),
-            links_up_to_date: Some(false),
-            shared_doc: Some(true),
-            hyperlinks_changed: Some(false),
-            heading_pairs: vec![HeadingPair {
-                name: "Heading 1".into(),
-                count: 3,
-            }],
-            titles_of_parts: vec!["Introduction".into()],
-            dig_sig: Some("signed".into()),
-            ..Default::default()
+                application: Some("Microsoft Word".into()),
+                app_version: Some("16.0".into()),
+                template: Some("Normal.dotm".into()),
+                company: Some("Acme & Co".into()),
+                total_time: Some(42),
+                pages: Some(3),
+                words: Some(1200),
+                characters: Some(6000),
+                characters_with_spaces: Some(7200),
+                lines: Some(80),
+                paragraphs: Some(12),
+                doc_security: Some(0),
+                scale_crop: Some(true),
+                links_up_to_date: Some(false),
+                shared_doc: Some(true),
+                hyperlinks_changed: Some(false),
+                heading_pairs: vec![HeadingPair {
+                    name: "Heading 1".into(),
+                    count: 3,
+                }],
+                titles_of_parts: vec!["Introduction".into()],
+                dig_sig: Some("signed".into()),
+                ..Default::default()
             },
             ..Default::default()
         };
