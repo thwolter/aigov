@@ -17,6 +17,34 @@ mod relationships;
 
 pub use part::PartName;
 
+/// An in-memory OOXML package.
+///
+/// `OoxmlPackage` loads every file in an OOXML ZIP package into memory. Use
+/// [`open`](Self::open) for a file or [`from_bytes`](Self::from_bytes) for
+/// in-memory input, then call [`save`](Self::save) to write the package back
+/// to disk.
+///
+/// # Examples
+///
+/// Inspect and update a package part:
+///
+/// ```no_run
+/// use aigov::package::{OoxmlPackage, PartName};
+/// use std::path::Path;
+///
+/// # fn main() -> aigov::Result<()> {
+/// let mut package = OoxmlPackage::open("report.docx")?;
+/// let document = PartName::from("word/document.xml");
+///
+/// if package.contains_part(&document) {
+///     println!("document has {} bytes", package.read_part(&document)?.len());
+/// }
+///
+/// package.write_part(PartName::from("custom/data.txt"), b"example".to_vec());
+/// package.save(Path::new("report-copy.docx"))?;
+/// # Ok(())
+/// # }
+/// ```
 #[derive(Debug, Clone)]
 pub struct OoxmlPackage {
     source_path: Option<PathBuf>,
@@ -69,10 +97,15 @@ impl OoxmlPackage {
         Ok(parts)
     }
 
+    /// Returns the source path when the package was opened from a file.
+    ///
+    /// Packages created with [`from_bytes`](Self::from_bytes) do not have a
+    /// source path.
     pub fn source_path(&self) -> Option<&Path> {
         self.source_path.as_deref()
     }
 
+    /// Returns all package parts in sorted order.
     pub fn parts(&self) -> Vec<PartName> {
         let mut parts: Vec<_> = self.parts.keys().cloned().collect();
 
@@ -81,10 +114,14 @@ impl OoxmlPackage {
         parts
     }
 
+    /// Returns whether the package contains `part`.
     pub fn contains_part(&self, part: &PartName) -> bool {
         self.parts.contains_key(part)
     }
 
+    /// Returns the bytes for `part`.
+    ///
+    /// Returns [`OfficeError::PartNotFound`] when the part is absent.
     pub fn read_part(&self, part: &PartName) -> Result<&[u8]> {
         self.parts
             .get(part)
@@ -124,16 +161,25 @@ impl OoxmlPackage {
         Ok(())
     }
 
-    /// Writes a part to the package.
+    /// Writes or replaces a part in the package.
+    ///
+    /// The bytes are copied into the package and can be persisted with
+    /// [`save`](Self::save).
     pub fn write_part(&mut self, part: PartName, content: Vec<u8>) {
         self.parts.insert(part, content);
     }
 
+    /// Removes a part from the package.
+    ///
+    /// Returns `true` if the part existed and was removed.
     pub fn remove_part(&mut self, part: &PartName) -> bool {
         self.parts.remove(part).is_some()
     }
 
-    /// Saves the package to a file.
+    /// Saves the package to a file as an OOXML ZIP archive.
+    ///
+    /// Existing files at `destination` are replaced. The package in memory is
+    /// not changed.
     pub fn save(&self, destination: &Path) -> Result<()> {
         let file = File::create(destination)?;
         let mut archive = ZipWriter::new(file);

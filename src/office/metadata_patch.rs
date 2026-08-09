@@ -3,6 +3,28 @@ use super::metadata::OfficeMetadata;
 use serde::{Deserialize, Deserializer};
 use std::collections::BTreeMap;
 
+/// A partial update for editable [`OfficeMetadata`] fields.
+///
+/// Fields set to `None` leave existing values unchanged. Unknown JSON fields
+/// are rejected. Custom properties are merged into the existing map, while an
+/// incoming value replaces a value with the same name. Application-generated
+/// extended properties, such as page and word counts, are not included.
+///
+/// # Examples
+///
+/// ```
+/// use aigov::{metadata::OfficeMetadata, metadata_patch::MetadataPatch};
+///
+/// let mut metadata = OfficeMetadata::default();
+/// let patch = MetadataPatch::from_json(
+///     r#"{"title":"New title","keywords":"rust, office","custom":{"Team":"Docs"}}"#,
+/// )?;
+/// patch.apply_to(&mut metadata)?;
+///
+/// assert_eq!(metadata.core.title.as_deref(), Some("New title"));
+/// assert_eq!(metadata.core.keywords, ["rust", "office"]);
+/// # Ok::<(), aigov::OfficeError>(())
+/// ```
 #[derive(Debug, Default, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct MetadataPatch {
@@ -48,10 +70,17 @@ where
 }
 
 impl MetadataPatch {
+    /// Parses a JSON object into a metadata patch.
+    ///
+    /// Keywords may be an array or comma-separated text. Returns an error for
+    /// malformed JSON or unsupported fields.
     pub fn from_json(json: &str) -> Result<Self> {
         Ok(serde_json::from_str(json)?)
     }
 
+    /// Applies this patch, preserving fields that were not provided.
+    ///
+    /// Custom properties are merged rather than replacing the complete map.
     pub fn apply_to(self, metadata: &mut OfficeMetadata) -> Result<()> {
         metadata.core.category = self.category.or(metadata.core.category.clone());
         metadata.core.content_status = self

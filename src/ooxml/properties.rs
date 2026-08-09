@@ -8,6 +8,28 @@ use crate::{
     package::OoxmlPackage,
 };
 
+/// Reads core, extended, and custom metadata from an OOXML package.
+///
+/// Missing metadata parts are represented by the corresponding default values
+/// in [`OfficeMetadata`]. The package is not modified.
+///
+/// # Examples
+///
+/// Read the title from an existing Office document:
+///
+/// ```no_run
+/// use aigov::{ooxml::read_metadata, package::OoxmlPackage};
+///
+/// # fn main() -> aigov::Result<()> {
+/// let package = OoxmlPackage::open("report.docx")?;
+/// let metadata = read_metadata(&package)?;
+///
+/// if let Some(title) = metadata.core.title {
+///     println!("{title}");
+/// }
+/// # Ok(())
+/// # }
+/// ```
 pub fn read_metadata(package: &OoxmlPackage) -> Result<OfficeMetadata> {
     let mut metadata = OfficeMetadata::default();
 
@@ -18,6 +40,35 @@ pub fn read_metadata(package: &OoxmlPackage) -> Result<OfficeMetadata> {
     Ok(metadata)
 }
 
+/// Writes core, extended, and custom metadata to an OOXML package.
+///
+/// The package is modified in memory. Call [`OoxmlPackage::save`] to persist
+/// the changes to a file. Fields left at their default values are omitted from
+/// the corresponding metadata parts when possible.
+///
+/// # Examples
+///
+/// Update a document's title and add a custom property, then save the result:
+///
+/// ```no_run
+/// use aigov::{
+///     metadata::OfficeMetadata,
+///     ooxml::{read_metadata, write_metadata},
+///     package::OoxmlPackage,
+/// };
+/// use std::path::Path;
+///
+/// # fn main() -> aigov::Result<()> {
+/// let mut package = OoxmlPackage::open("report.docx")?;
+/// let mut metadata: OfficeMetadata = read_metadata(&package)?;
+/// metadata.core.title = Some("Quarterly report".into());
+/// metadata.custom.insert("Department".into(), "Finance".into());
+///
+/// write_metadata(&mut package, &metadata)?;
+/// package.save(Path::new("report-with-metadata.docx"))?;
+/// # Ok(())
+/// # }
+/// ```
 pub fn write_metadata(package: &mut OoxmlPackage, metadata: &OfficeMetadata) -> Result<()> {
     core::write_to(package, metadata)?;
     extended::write_to(package, metadata)?;
