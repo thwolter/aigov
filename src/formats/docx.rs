@@ -119,7 +119,7 @@ impl WordDocument for DocxDocument {
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use std::io::{Cursor, Write};
 
     use zip::{ZipWriter, write::SimpleFileOptions};
@@ -143,7 +143,7 @@ mod tests {
         }
     }
 
-    fn minimal_docx() -> DocxDocument {
+    pub(crate) fn minimal_docx() -> DocxDocument {
         docx_document(&[
             (
                 "[Content_Types].xml",
