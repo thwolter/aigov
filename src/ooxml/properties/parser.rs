@@ -1,5 +1,5 @@
 use crate::error::{OfficeError, Result};
-use crate::office::OfficeMetadata;
+use crate::office::metadata::OfficeMetadata;
 use quick_xml::{
     Reader, Writer,
     events::{BytesEnd, BytesStart, BytesText, Event},

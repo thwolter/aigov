@@ -1,6 +1,6 @@
 use crate::{
     error::{OfficeError, Result},
-    office::{HeadingPair, OfficeMetadata},
+    office::metadata::{HeadingPair, OfficeMetadata},
     ooxml::package::OoxmlPackage,
 };
 

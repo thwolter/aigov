@@ -1,5 +1,13 @@
-use super::parser::{MetadataProperty, write_text_element, write_timestamp_element};
-use crate::{error::Result, office::OfficeMetadata, ooxml::package::OoxmlPackage};
+use super::parser::{
+    MetadataProperty,
+    write_text_element,
+    write_timestamp_element,
+};
+use crate::{
+    error::Result,
+    office::metadata::OfficeMetadata,
+    ooxml::package::OoxmlPackage,
+};
 use quick_xml::{
     Writer,
     events::{BytesDecl, BytesEnd, BytesStart, Event},

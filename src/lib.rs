@@ -1,5 +1,4 @@
 pub mod error;
-mod formats;
 mod office;
 pub mod ooxml;
 

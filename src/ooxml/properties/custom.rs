@@ -1,11 +1,11 @@
 use crate::{
     error::{OfficeError, Result},
-    office::{OfficeMetadata, PartName},
+    office::{metadata::OfficeMetadata, part::PartName},
     ooxml::package::OoxmlPackage,
 };
 use quick_xml::{
-    events::{BytesDecl, BytesEnd, BytesStart, BytesText, Event},
     Reader, Writer,
+    events::{BytesDecl, BytesEnd, BytesStart, BytesText, Event},
 };
 
 pub const DOC_PROPS_CUSTOM: &str = "docProps/custom.xml";

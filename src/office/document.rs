@@ -1,7 +1,7 @@
 use crate::error::Result;
 use std::path::Path;
 
-use super::{metadata::OfficeMetadata, part::PartName, validation::ValidationIssue};
+use super::{metadata::OfficeMetadata, part::PartName};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum OfficeFileType {
@@ -29,7 +29,7 @@ pub trait OfficeDocument {
 
     fn set_metadata(&mut self, metadata: OfficeMetadata) -> Result<()>;
 
-    fn validate(&self) -> Result<Vec<ValidationIssue>>;
+    // fn validate(&self) -> Result<Vec<ValidationIssue>>;
 
     fn save(&self, destination: &Path) -> Result<()>;
 }

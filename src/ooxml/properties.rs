@@ -4,7 +4,10 @@ mod extended;
 mod parser;
 
 use super::package::OoxmlPackage;
-use crate::{error::Result, office::OfficeMetadata};
+use crate::{
+    error::Result,
+    office::metadata::OfficeMetadata,
+};
 
 pub fn read_metadata(package: &OoxmlPackage) -> Result<OfficeMetadata> {
     let mut metadata = OfficeMetadata::default();
@@ -27,7 +30,7 @@ pub fn write_metadata(package: &mut OoxmlPackage, metadata: &OfficeMetadata) -> 
 #[cfg(test)]
 mod tests {
     use super::{core::CoreProperty, extended::ExtendedProperty, parser::MetadataProperty};
-    use crate::office::OfficeMetadata;
+    use crate::metadata::OfficeMetadata;
 
     #[test]
     fn parses_core_properties() {

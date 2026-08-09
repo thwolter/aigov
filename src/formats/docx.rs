@@ -3,7 +3,7 @@ use std::path::Path;
 use crate::{
     error::Result,
     office::{OfficeDocument, OfficeFileType, OfficeMetadata, PartName, ValidationIssue},
-    ooxml::{OoxmlPackage, properties},
+    ooxml::{OoxmlPackage},
 };
 
 use crate::office::word::WordDocument;
@@ -54,14 +54,6 @@ impl OfficeDocument for DocxDocument {
 
     fn contains_part(&self, part: &PartName) -> bool {
         self.package.contains_part(part)
-    }
-
-    fn metadata(&self) -> Result<OfficeMetadata> {
-        properties::read_metadata(&self.package)
-    }
-
-    fn set_metadata(&mut self, metadata: OfficeMetadata) -> Result<()> {
-        properties::write_metadata(&mut self.package, &metadata)
     }
 
     fn validate(&self) -> Result<Vec<ValidationIssue>> {
