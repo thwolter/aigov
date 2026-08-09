@@ -9,5 +9,10 @@ pub trait WordDocument: OfficeDocument {
     /// Replaces all occurrences of `search` with `replacement`.
     ///
     /// Returns the number of replacements made.
-    fn replace_text(&mut self, search: &str, replacement: &str) -> error::Result<usize>;
+    fn replace_text(
+        &mut self,
+        search: &str,
+        replacement: &str,
+        ignore_case: bool,
+    ) -> error::Result<usize>;
 }

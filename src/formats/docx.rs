@@ -101,21 +101,67 @@ impl OfficeDocument for DocxDocument {
 }
 
 impl WordDocument for DocxDocument {
-    fn replace_text(&mut self, search: &str, replacement: &str) -> Result<usize> {
+    fn replace_text(
+        &mut self,
+        search: &str,
+        replacement: &str,
+        ignore_case: bool,
+    ) -> Result<usize> {
         let part = PartName::new(OFFICE_XML);
-        let xml = self.package.read_part(&part)?;
-        let xml = String::from_utf8_lossy(xml);
+        let xml = String::from_utf8_lossy(self.package.read_part(&part)?);
 
-        let count = xml.matches(search).count();
+        let (count, updated) = if ignore_case {
+            replace_case_insensitive(&xml, search, replacement)
+        } else {
+            let count = xml.matches(search).count();
+            (count, xml.replace(search, replacement))
+        };
 
         if count > 0 {
-            let updated = xml.replace(search, replacement);
-
             self.package.write_part(part, updated.into_bytes());
         }
 
         Ok(count)
     }
+}
+
+fn replace_case_insensitive(xml: &str, search: &str, replacement: &str) -> (usize, String) {
+    if search.is_empty() {
+        return (
+            xml.matches(search).count(),
+            xml.replace(search, replacement),
+        );
+    }
+
+    let folded_search = search.to_lowercase();
+    let mut folded_xml = String::new();
+    let mut boundaries = vec![(0, 0)];
+
+    for (start, character) in xml.char_indices() {
+        folded_xml.extend(character.to_lowercase());
+        boundaries.push((folded_xml.len(), start + character.len_utf8()));
+    }
+
+    let ranges: Vec<_> = folded_xml
+        .match_indices(&folded_search)
+        .filter_map(|(start, _)| {
+            let end = start + folded_search.len();
+            let original_start = boundaries
+                .binary_search_by_key(&start, |entry| entry.0)
+                .ok()?;
+            let original_end = boundaries
+                .binary_search_by_key(&end, |entry| entry.0)
+                .ok()?;
+            Some((boundaries[original_start].1, boundaries[original_end].1))
+        })
+        .collect();
+
+    let mut updated = xml.to_owned();
+    for (start, end) in ranges.iter().rev() {
+        updated.replace_range(*start..*end, replacement);
+    }
+
+    (ranges.len(), updated)
 }
 
 #[cfg(test)]
@@ -215,10 +261,10 @@ pub(crate) mod tests {
     }
 
     #[test]
-    fn replaces_text_in_document_xml() {
+    fn replaces_text_in_document_xml_case_sensitive() {
         let mut document = minimal_docx();
 
-        let count = document.replace_text("Hello", "Goodbye").unwrap();
+        let count = document.replace_text("Hello", "Goodbye", false).unwrap();
 
         assert_eq!(1, count);
 
@@ -229,10 +275,28 @@ pub(crate) mod tests {
     }
 
     #[test]
+    fn replaces_text_in_document_xml_case_insensitive() {
+        let mut document = minimal_docx();
+
+        let count = document.replace_text("hello", "Goodbye", true).unwrap();
+
+        assert_eq!(1, count);
+
+        let xml = std::str::from_utf8(document.document_xml().unwrap()).unwrap();
+
+        assert_eq!(
+            xml,
+            r#"<?xml version="1.0" encoding="UTF-8"?><w:office>Goodbye world</w:office>"#
+        );
+    }
+
+    #[test]
     fn does_not_update_document_xml_when_text_is_missing() {
         let mut document = minimal_docx();
 
-        let count = document.replace_text("Missing", "Replacement").unwrap();
+        let count = document
+            .replace_text("Missing", "Replacement", false)
+            .unwrap();
 
         assert_eq!(0, count);
 
