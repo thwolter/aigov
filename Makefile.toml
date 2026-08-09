@@ -1,0 +1,18 @@
+[tasks.check]
+command = "cargo"
+args = ["check"]
+
+[tasks.test]
+command = "cargo"
+args = ["test"]
+
+[tasks.ci]
+dependencies = ["fmt", "clippy", "test"]
+
+[tasks.fmt]
+command = "cargo"
+args = ["fmt", "--", "--check"]
+
+[tasks.clippy]
+command = "cargo"
+args = ["clippy", "--", "-D", "warnings"]
