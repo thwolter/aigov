@@ -1,7 +1,7 @@
 use crate::{
     error::{OfficeError, Result},
     office::metadata::OfficeMetadata,
-    ooxml::package::OoxmlPackage,
+    package::OoxmlPackage,
 };
 use quick_xml::{
     Reader, Writer,

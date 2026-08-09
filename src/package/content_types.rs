@@ -1,5 +1,5 @@
 use crate::Result;
-use super::xml::insert_before_closing_tag;
+use super::insert_before_closing_tag;
 
 pub(crate) const PART_NAME: &str = "[Content_Types].xml";
 

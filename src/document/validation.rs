@@ -1,4 +1,4 @@
-use super::part::PartName;
+use crate::package::PartName;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Severity {

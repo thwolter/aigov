@@ -1,7 +1,7 @@
 use crate::{
     error::{OfficeError, Result},
     office::metadata::{HeadingPair, OfficeMetadata},
-    ooxml::package::OoxmlPackage,
+    package::OoxmlPackage,
 };
 
 
@@ -27,32 +27,32 @@ pub(super) fn read_from(package: &OoxmlPackage, metadata: &mut OfficeMetadata) -
 fn apply_properties(properties: Vec<TextElement>, metadata: &mut OfficeMetadata) {
     for TextElement { name, value } in properties {
         match name.as_slice() {
-            b"Application" => metadata.application = Some(value),
-            b"AppVersion" => metadata.app_version = Some(value),
-            b"Template" => metadata.template = Some(value),
-            b"Company" => metadata.company = Some(value),
+            b"Application" => metadata.extended.application = Some(value),
+            b"AppVersion" => metadata.extended.app_version = Some(value),
+            b"Template" => metadata.extended.template = Some(value),
+            b"Company" => metadata.extended.company = Some(value),
 
-            b"TotalTime" => metadata.total_time = value.parse().ok(),
-            b"Pages" => metadata.pages = value.parse().ok(),
-            b"Words" => metadata.words = value.parse().ok(),
-            b"Characters" => metadata.characters = value.parse().ok(),
+            b"TotalTime" => metadata.extended.total_time = value.parse().ok(),
+            b"Pages" => metadata.extended.pages = value.parse().ok(),
+            b"Words" => metadata.extended.words = value.parse().ok(),
+            b"Characters" => metadata.extended.characters = value.parse().ok(),
             b"CharactersWithSpaces" => {
-                metadata.characters_with_spaces = value.parse().ok()
+                metadata.extended.characters_with_spaces = value.parse().ok()
             }
-            b"Lines" => metadata.lines = value.parse().ok(),
-            b"Paragraphs" => metadata.paragraphs = value.parse().ok(),
-            b"DocSecurity" => metadata.doc_security = value.parse().ok(),
+            b"Lines" => metadata.extended.lines = value.parse().ok(),
+            b"Paragraphs" => metadata.extended.paragraphs = value.parse().ok(),
+            b"DocSecurity" => metadata.extended.doc_security = value.parse().ok(),
 
-            b"ScaleCrop" => metadata.scale_crop = parse_bool(&value),
+            b"ScaleCrop" => metadata.extended.scale_crop = parse_bool(&value),
             b"LinksUpToDate" => {
-                metadata.links_up_to_date = parse_bool(&value)
+                metadata.extended.links_up_to_date = parse_bool(&value)
             }
-            b"SharedDoc" => metadata.shared_doc = parse_bool(&value),
+            b"SharedDoc" => metadata.extended.shared_doc = parse_bool(&value),
             b"HyperlinksChanged" => {
-                metadata.hyperlinks_changed = parse_bool(&value)
+                metadata.extended.hyperlinks_changed = parse_bool(&value)
             }
 
-            b"DigSig" => metadata.dig_sig = Some(value),
+            b"DigSig" => metadata.extended.dig_sig = Some(value),
 
             // HeadingPairs and TitlesOfParts are handled separately.
             _ => {}
@@ -104,7 +104,7 @@ fn read_vectors(xml: &[u8], metadata: &mut OfficeMetadata) -> Result<()> {
                             "HeadingPairs must contain name/count pairs".into(),
                         ));
                     }
-                    metadata.heading_pairs = values
+                    metadata.extended.heading_pairs = values
                         .chunks_exact(2)
                         .map(|pair| {
                             Ok(HeadingPair {
@@ -123,7 +123,7 @@ fn read_vectors(xml: &[u8], metadata: &mut OfficeMetadata) -> Result<()> {
             if property == Some("TitlesOfParts")
                 && element.local_name().as_ref() == b"TitlesOfParts" =>
                 {
-                    metadata.titles_of_parts = std::mem::take(&mut values);
+                    metadata.extended.titles_of_parts = std::mem::take(&mut values);
                     property = None;
                 }
             Event::Eof => break,
@@ -165,33 +165,35 @@ fn create_extended_properties(metadata: &OfficeMetadata) -> Result<Vec<u8>> {
     ));
     writer.write_event(Event::Start(root))?;
 
-    write_optional(&mut writer, "Application", metadata.application.as_deref())?;
-    write_optional(&mut writer, "AppVersion", metadata.app_version.as_deref())?;
-    write_optional(&mut writer, "Template", metadata.template.as_deref())?;
-    write_optional(&mut writer, "Company", metadata.company.as_deref())?;
-    write_optional_number(&mut writer, "TotalTime", metadata.total_time)?;
-    write_optional_number(&mut writer, "Pages", metadata.pages)?;
-    write_optional_number(&mut writer, "Words", metadata.words)?;
-    write_optional_number(&mut writer, "Characters", metadata.characters)?;
+    let extended = &metadata.extended;
+
+    write_optional(&mut writer, "Application", extended.application.as_deref())?;
+    write_optional(&mut writer, "AppVersion", extended.app_version.as_deref())?;
+    write_optional(&mut writer, "Template", extended.template.as_deref())?;
+    write_optional(&mut writer, "Company", extended.company.as_deref())?;
+    write_optional_number(&mut writer, "TotalTime", extended.total_time)?;
+    write_optional_number(&mut writer, "Pages", extended.pages)?;
+    write_optional_number(&mut writer, "Words", extended.words)?;
+    write_optional_number(&mut writer, "Characters", extended.characters)?;
     write_optional_number(
         &mut writer,
         "CharactersWithSpaces",
-        metadata.characters_with_spaces,
+        extended.characters_with_spaces,
     )?;
-    write_optional_number(&mut writer, "Lines", metadata.lines)?;
-    write_optional_number(&mut writer, "Paragraphs", metadata.paragraphs)?;
-    write_optional_number(&mut writer, "DocSecurity", metadata.doc_security)?;
-    write_optional_bool(&mut writer, "ScaleCrop", metadata.scale_crop)?;
-    write_optional_bool(&mut writer, "LinksUpToDate", metadata.links_up_to_date)?;
-    write_optional_bool(&mut writer, "SharedDoc", metadata.shared_doc)?;
+    write_optional_number(&mut writer, "Lines", extended.lines)?;
+    write_optional_number(&mut writer, "Paragraphs", extended.paragraphs)?;
+    write_optional_number(&mut writer, "DocSecurity", extended.doc_security)?;
+    write_optional_bool(&mut writer, "ScaleCrop", extended.scale_crop)?;
+    write_optional_bool(&mut writer, "LinksUpToDate", extended.links_up_to_date)?;
+    write_optional_bool(&mut writer, "SharedDoc", extended.shared_doc)?;
     write_optional_bool(
         &mut writer,
         "HyperlinksChanged",
-        metadata.hyperlinks_changed,
+        extended.hyperlinks_changed,
     )?;
-    write_heading_pairs(&mut writer, &metadata.heading_pairs)?;
-    write_titles_of_parts(&mut writer, &metadata.titles_of_parts)?;
-    write_optional(&mut writer, "DigSig", metadata.dig_sig.as_deref())?;
+    write_heading_pairs(&mut writer, &extended.heading_pairs)?;
+    write_titles_of_parts(&mut writer, &extended.titles_of_parts)?;
+    write_optional(&mut writer, "DigSig", extended.dig_sig.as_deref())?;
 
     writer.write_event(Event::End(BytesEnd::new("Properties")))?;
     Ok(writer.into_inner())
@@ -273,11 +275,14 @@ fn write_titles_of_parts(writer: &mut Writer<Vec<u8>>, titles: &[String]) -> Res
 
 #[cfg(test)]
 mod tests {
+    use crate::office::metadata::ExtendedMetadata;
+
     use super::*;
 
     #[test]
     fn creates_extended_properties() {
         let metadata = OfficeMetadata {
+            extended: ExtendedMetadata {
             application: Some("Microsoft Word".into()),
             app_version: Some("16.0".into()),
             template: Some("Normal.dotm".into()),
@@ -300,6 +305,8 @@ mod tests {
             }],
             titles_of_parts: vec!["Introduction".into()],
             dig_sig: Some("signed".into()),
+            ..Default::default()
+            },
             ..Default::default()
         };
 

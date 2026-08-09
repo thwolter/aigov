@@ -1,4 +1,4 @@
-use crate::office::PartName;
+use crate::package::PartName;
 
 #[derive(Debug, thiserror::Error)]
 pub enum OfficeError {

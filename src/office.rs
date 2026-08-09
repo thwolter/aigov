@@ -1,7 +1,6 @@
 pub mod document;
 pub mod metadata;
-pub mod part;
+pub mod metadata_patch;
 pub mod word;
 
-pub use document::{OfficeDocument};
-pub use part::PartName;
+pub use document::OfficeDocument;

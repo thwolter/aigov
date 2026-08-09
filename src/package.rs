@@ -7,11 +7,15 @@ use std::{
 };
 use zip::{ZipArchive, ZipWriter, write::SimpleFileOptions};
 
-use super::{content_types, relationships};
 use crate::{
     error::{OfficeError, Result},
-    office::PartName,
 };
+
+mod content_types;
+mod part;
+mod relationships;
+
+pub use part::PartName;
 
 #[derive(Debug, Clone)]
 pub struct OoxmlPackage {
@@ -148,6 +152,43 @@ impl OoxmlPackage {
 
         Ok(())
     }
+}
+
+fn insert_before_closing_tag(
+    xml: &[u8],
+    closing_tag: &str,
+    addition: &str,
+    already_present: &str,
+) -> Result<Vec<u8>> {
+    let xml = std::str::from_utf8(xml)
+        .map_err(|error| OfficeError::InvalidDocument(format!("Invalid package XML: {error}")))?;
+
+    if xml.contains(already_present) {
+        return Ok(xml.as_bytes().to_vec());
+    }
+
+    let updated = xml.replacen(closing_tag, &format!("{addition}{closing_tag}"), 1);
+    if updated != xml {
+        return Ok(updated.into_bytes());
+    }
+
+    let root_name = closing_tag.trim_start_matches("</").trim_end_matches('>');
+    let Some(index) = xml.rfind("/>") else {
+        return Err(OfficeError::InvalidDocument(format!(
+            "Invalid package XML: missing {closing_tag}"
+        )));
+    };
+
+    let root = &xml[..index];
+    if !root.trim_start().starts_with(&format!("<{root_name}"))
+        && !root.contains(&format!("<{root_name}"))
+    {
+        return Err(OfficeError::InvalidDocument(format!(
+            "Invalid package XML: missing {closing_tag}"
+        )));
+    }
+
+    Ok(format!("{root}>{addition}</{root_name}>").into_bytes())
 }
 
 #[cfg(test)]

@@ -1,5 +1,9 @@
 use crate::ooxml::xml::{TextElement, parse_text_elements, write_text_element};
-use crate::{error::Result, office::metadata::OfficeMetadata, ooxml::package::OoxmlPackage};
+use crate::{
+    error::Result,
+    office::metadata::OfficeMetadata,
+    package::OoxmlPackage,
+};
 use quick_xml::events::BytesText;
 use quick_xml::{
     Writer,
@@ -20,14 +24,14 @@ pub(super) fn read_from(package: &OoxmlPackage, metadata: &mut OfficeMetadata) -
 fn apply_properties(properties: Vec<TextElement>, metadata: &mut OfficeMetadata) {
     for TextElement { name, value } in properties {
         match name.as_slice() {
-            b"title" => metadata.title = Some(value),
-            b"subject" => metadata.subject = Some(value),
-            b"creator" => metadata.creator = Some(value),
-            b"lastModifiedBy" => metadata.last_modified_by = Some(value),
-            b"description" => metadata.description = Some(value),
+            b"title" => metadata.core.title = Some(value),
+            b"subject" => metadata.core.subject = Some(value),
+            b"creator" => metadata.core.creator = Some(value),
+            b"lastModifiedBy" => metadata.core.last_modified_by = Some(value),
+            b"description" => metadata.core.description = Some(value),
 
             b"keywords" => {
-                metadata.keywords = value
+                metadata.core.keywords = value
                     .split(',')
                     .map(str::trim)
                     .filter(|keyword| !keyword.is_empty())
@@ -35,16 +39,16 @@ fn apply_properties(properties: Vec<TextElement>, metadata: &mut OfficeMetadata)
                     .collect();
             }
 
-            b"category" => metadata.category = Some(value),
-            b"contentStatus" => metadata.content_status = Some(value),
-            b"contentType" => metadata.content_type = Some(value),
-            b"language" => metadata.language = Some(value),
-            b"created" => metadata.created = Some(value),
-            b"modified" => metadata.modified = Some(value),
-            b"lastPrinted" => metadata.last_printed = Some(value),
-            b"revision" => metadata.revision = Some(value),
-            b"identifier" => metadata.identifier = Some(value),
-            b"version" => metadata.version = Some(value),
+            b"category" => metadata.core.category = Some(value),
+            b"contentStatus" => metadata.core.content_status = Some(value),
+            b"contentType" => metadata.core.content_type = Some(value),
+            b"language" => metadata.core.language = Some(value),
+            b"created" => metadata.core.created = Some(value),
+            b"modified" => metadata.core.modified = Some(value),
+            b"lastPrinted" => metadata.core.last_printed = Some(value),
+            b"revision" => metadata.core.revision = Some(value),
+            b"identifier" => metadata.core.identifier = Some(value),
+            b"version" => metadata.core.version = Some(value),
 
             // Unknown core properties are intentionally ignored.
             _ => {}
@@ -59,6 +63,7 @@ pub(super) fn write_to(package: &mut OoxmlPackage, metadata: &OfficeMetadata) ->
 }
 
 fn create_core_properties(metadata: &OfficeMetadata) -> Result<Vec<u8>> {
+    let core = &metadata.core;
     let mut writer = Writer::new(Vec::new());
 
     writer.write_event(Event::Decl(BytesDecl::new(
@@ -79,12 +84,12 @@ fn create_core_properties(metadata: &OfficeMetadata) -> Result<Vec<u8>> {
 
     writer.write_event(Event::Start(root))?;
 
-    if let Some(title) = metadata.title.as_deref().filter(|value| !value.is_empty()) {
+    if let Some(title) = core.title.as_deref().filter(|value| !value.is_empty()) {
         write_text_element(&mut writer, "dc:title", title)?;
     }
 
     if let Some(subject) = metadata
-        .subject
+        .core.subject
         .as_deref()
         .filter(|value| !value.is_empty())
     {
@@ -92,7 +97,7 @@ fn create_core_properties(metadata: &OfficeMetadata) -> Result<Vec<u8>> {
     }
 
     if let Some(creator) = metadata
-        .creator
+        .core.creator
         .as_deref()
         .filter(|value| !value.is_empty())
     {
@@ -100,7 +105,7 @@ fn create_core_properties(metadata: &OfficeMetadata) -> Result<Vec<u8>> {
     }
 
     if let Some(last_modified_by) = metadata
-        .last_modified_by
+        .core.last_modified_by
         .as_deref()
         .filter(|value| !value.is_empty())
     {
@@ -108,44 +113,44 @@ fn create_core_properties(metadata: &OfficeMetadata) -> Result<Vec<u8>> {
     }
 
     if let Some(description) = metadata
-        .description
+        .core.description
         .as_deref()
         .filter(|value| !value.is_empty())
     {
         write_text_element(&mut writer, "dc:description", description)?;
     }
 
-    if !metadata.keywords.is_empty() {
-        let keywords = metadata.keywords.join(", ");
+    if !core.keywords.is_empty() {
+        let keywords = core.keywords.join(", ");
         write_text_element(&mut writer, "cp:keywords", &keywords)?;
     }
 
-    write_optional(&mut writer, "cp:category", metadata.category.as_deref())?;
+    write_optional(&mut writer, "cp:category", core.category.as_deref())?;
     write_optional(
         &mut writer,
         "cp:contentStatus",
-        metadata.content_status.as_deref(),
+        core.content_status.as_deref(),
     )?;
     write_optional(
         &mut writer,
         "cp:contentType",
-        metadata.content_type.as_deref(),
+        core.content_type.as_deref(),
     )?;
-    write_optional(&mut writer, "dc:language", metadata.language.as_deref())?;
-    write_optional_timestamp(&mut writer, "dcterms:created", metadata.created.as_deref())?;
+    write_optional(&mut writer, "dc:language", core.language.as_deref())?;
+    write_optional_timestamp(&mut writer, "dcterms:created", core.created.as_deref())?;
     write_optional_timestamp(
         &mut writer,
         "dcterms:modified",
-        metadata.modified.as_deref(),
+        core.modified.as_deref(),
     )?;
     write_optional(
         &mut writer,
         "cp:lastPrinted",
-        metadata.last_printed.as_deref(),
+        core.last_printed.as_deref(),
     )?;
-    write_optional(&mut writer, "cp:revision", metadata.revision.as_deref())?;
-    write_optional(&mut writer, "dc:identifier", metadata.identifier.as_deref())?;
-    write_optional(&mut writer, "cp:version", metadata.version.as_deref())?;
+    write_optional(&mut writer, "cp:revision", core.revision.as_deref())?;
+    write_optional(&mut writer, "dc:identifier", core.identifier.as_deref())?;
+    write_optional(&mut writer, "cp:version", core.version.as_deref())?;
 
     writer.write_event(Event::End(BytesEnd::new("cp:coreProperties")))?;
 
@@ -172,11 +177,14 @@ fn write_optional_timestamp(
 
 #[cfg(test)]
 mod tests {
+    use crate::office::metadata::CoreMetadata;
+
     use super::*;
 
     #[test]
     fn creates_core_properties() {
         let metadata = OfficeMetadata {
+            core: CoreMetadata {
             title: Some("A & B".into()),
             creator: Some("Jane Doe".into()),
             keywords: vec!["planning".into(), "product".into()],
@@ -191,25 +199,15 @@ mod tests {
             identifier: Some("report-42".into()),
             version: Some("1.2".into()),
             ..Default::default()
+            },
+            ..Default::default()
         };
 
         let xml = create_core_properties(&metadata).unwrap();
         let mut parsed = OfficeMetadata::default();
         apply_properties(parse_text_elements(&xml).unwrap(), &mut parsed);
 
-        assert_eq!(parsed.title, metadata.title);
-        assert_eq!(parsed.creator, metadata.creator);
-        assert_eq!(parsed.keywords, metadata.keywords);
-        assert_eq!(parsed.category, metadata.category);
-        assert_eq!(parsed.content_status, metadata.content_status);
-        assert_eq!(parsed.content_type, metadata.content_type);
-        assert_eq!(parsed.language, metadata.language);
-        assert_eq!(parsed.created, metadata.created);
-        assert_eq!(parsed.modified, metadata.modified);
-        assert_eq!(parsed.last_printed, metadata.last_printed);
-        assert_eq!(parsed.revision, metadata.revision);
-        assert_eq!(parsed.identifier, metadata.identifier);
-        assert_eq!(parsed.version, metadata.version);
+        assert_eq!(parsed.core, metadata.core);
     }
 }
 

@@ -2,8 +2,9 @@ use std::path::Path;
 
 use crate::{
     error::Result,
-    office::{OfficeDocument, OfficeFileType, OfficeMetadata, PartName, ValidationIssue},
-    ooxml::{OoxmlPackage},
+    document::ValidationIssue,
+    office::{OfficeDocument, OfficeFileType, OfficeMetadata},
+    package::{OoxmlPackage, PartName},
 };
 
 use crate::office::word::WordDocument;

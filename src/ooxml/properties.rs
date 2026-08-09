@@ -2,10 +2,10 @@ mod core;
 mod custom;
 mod extended;
 
-use super::package::OoxmlPackage;
 use crate::{
     error::Result,
     office::metadata::OfficeMetadata,
+    package::OoxmlPackage,
 };
 
 pub fn read_metadata(package: &OoxmlPackage) -> Result<OfficeMetadata> {

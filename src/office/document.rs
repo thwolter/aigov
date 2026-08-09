@@ -1,7 +1,9 @@
 use crate::error::Result;
 use std::path::Path;
 
-use super::{metadata::OfficeMetadata, part::PartName};
+use crate::package::PartName;
+
+use super::metadata::OfficeMetadata;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum OfficeFileType {
