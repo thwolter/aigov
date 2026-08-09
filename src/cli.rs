@@ -25,7 +25,10 @@ pub enum Commands {
     /// Set/show metadata for a office document.
     Metadata(Box<metadata::MetadataArgs>),
 
-    /// Convert a office document to PDF.
+    /// Convert an Office document to PDF using LibreOffice.
+    ///
+    /// ⚠ Warning: LibreOffice must be installed and the `soffice` command
+    /// must be available on `PATH`.
     Pdf(pdf::PdfArgs),
 }
 

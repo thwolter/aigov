@@ -59,6 +59,14 @@ pub enum OfficeError {
     /// A document conversion operation failed.
     #[error("Conversion error: {0}")]
     Conversion(String),
+
+    #[error(
+        "required tool {tool} was not found (`{command}`); install it and ensure it is available on PATH"
+    )]
+    ExternalToolNotFound {
+        tool: &'static str,
+        command: &'static str,
+    },
 }
 
 /// The result type used by the library's public APIs.
