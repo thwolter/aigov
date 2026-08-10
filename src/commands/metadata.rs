@@ -8,7 +8,7 @@ use std::io::{self};
 use std::path::Path;
 
 pub fn show_metadata(filepath: &Path, metadata_args: &MetadataArgs) -> Result<()> {
-    let package = OoxmlPackage::open(filepath)?;
+    let package = OoxmlPackage::from_file(filepath)?;
     let metadata = ooxml::read_metadata(&package)?;
     let metadata = serde_json::json!({
         "core": {
@@ -67,7 +67,7 @@ pub fn show_metadata(filepath: &Path, metadata_args: &MetadataArgs) -> Result<()
 }
 
 pub fn set_metadata(filepath: &Path, args: &SetArgs) -> Result<()> {
-    let mut package = OoxmlPackage::open(filepath)?;
+    let mut package = OoxmlPackage::from_file(filepath)?;
     let mut metadata = ooxml::read_metadata(&package)?;
 
     if let Some(profile) = &args.profile {

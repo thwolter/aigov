@@ -50,7 +50,7 @@ mod tests {
         convert_to_pdf(&input, &pdf_args).unwrap();
         assert!(dir.path().join("test").exists());
 
-        let bytes = fs::read(dir.path().join("minimal.pdf")).unwrap();
+        let bytes = fs::read(dir.path().join("test/minimal.pdf")).unwrap();
         assert!(bytes.starts_with(b"%PDF-"))
     }
 }

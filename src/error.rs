@@ -15,7 +15,7 @@ use crate::package::PartName;
 /// use std::path::Path;
 ///
 /// fn open_document(path: &Path) -> Result<()> {
-///     match aigov::package::OoxmlPackage::open(path) {
+///     match aigov::package::OoxmlPackage::from_file(path) {
 ///         Ok(_) => Ok(()),
 ///         Err(OfficeError::Io(error)) => {
 ///             eprintln!("could not open document: {error}");

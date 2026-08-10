@@ -17,7 +17,7 @@ use crate::{error::Result, office::metadata::OfficeMetadata, package::OoxmlPacka
 /// use aigov::{ooxml::read_metadata, package::OoxmlPackage};
 ///
 /// # fn main() -> aigov::Result<()> {
-/// let package = OoxmlPackage::open("report.docx")?;
+/// let package = OoxmlPackage::from_file("report.docx")?;
 /// let metadata = read_metadata(&package)?;
 ///
 /// if let Some(title) = metadata.core.title {
@@ -55,7 +55,7 @@ pub fn read_metadata(package: &OoxmlPackage) -> Result<OfficeMetadata> {
 /// use std::path::Path;
 ///
 /// # fn main() -> aigov::Result<()> {
-/// let mut package = OoxmlPackage::open("report.docx")?;
+/// let mut package = OoxmlPackage::from_file("report.docx")?;
 /// let mut metadata: OfficeMetadata = read_metadata(&package)?;
 /// metadata.core.title = Some("Quarterly report".into());
 /// metadata.custom.insert("Department".into(), "Finance".into());

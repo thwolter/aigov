@@ -18,7 +18,7 @@ pub use part::PartName;
 /// An in-memory OOXML package.
 ///
 /// `OoxmlPackage` loads every file in an OOXML ZIP package into memory. Use
-/// [`open`](Self::open) for a file or [`from_bytes`](Self::from_bytes) for
+/// [`open`](Self::from_file) for a file or [`from_bytes`](Self::from_bytes) for
 /// in-memory input, then call [`save`](Self::save) to write the package back
 /// to disk.
 ///
@@ -31,7 +31,7 @@ pub use part::PartName;
 /// use std::path::Path;
 ///
 /// # fn main() -> aigov::Result<()> {
-/// let mut package = OoxmlPackage::open("report.docx")?;
+/// let mut package = OoxmlPackage::from_file("report.docx")?;
 /// let document = PartName::from("word/document.xml");
 ///
 /// if package.contains_part(&document) {
@@ -51,7 +51,7 @@ pub struct OoxmlPackage {
 
 impl OoxmlPackage {
     /// Creates a new package from a file path.
-    pub fn open(path: impl AsRef<Path>) -> Result<Self> {
+    pub fn from_file(path: impl AsRef<Path>) -> Result<Self> {
         let path = path.as_ref();
         let file = File::open(path)?;
         let parts = Self::collect_parts(file)?;
@@ -352,11 +352,11 @@ mod tests {
         ]);
 
         fs::write(&source, &bytes).unwrap();
-        let package = OoxmlPackage::open(&source).unwrap();
+        let package = OoxmlPackage::from_file(&source).unwrap();
         assert_eq!(package.source_path(), Some(source.as_path()));
 
         package.save(&destination).unwrap();
-        let saved = OoxmlPackage::open(&destination).unwrap();
+        let saved = OoxmlPackage::from_file(&destination).unwrap();
         assert_eq!(saved.parts(), package.parts());
         assert_eq!(
             saved

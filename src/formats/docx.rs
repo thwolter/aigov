@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use crate::office::document::{CaseMatching, ReplaceOptions};
+use crate::office::document::{CaseMatching, OoxmlDocument, ReplaceOptions};
 use crate::{
     document::ValidationIssue,
     error::Result,
@@ -41,19 +41,21 @@ impl DocxDocument {
     }
 }
 
+impl OoxmlDocument for DocxDocument {
+    fn from_package(package: OoxmlPackage) -> Self {
+        Self { package }
+    }
+
+    fn package(&self) -> &OoxmlPackage {
+        &self.package
+    }
+
+    fn mut_package(&mut self) -> &mut OoxmlPackage {
+        &mut self.package
+    }
+}
+
 impl OfficeDocument for DocxDocument {
-    fn from_file(path: &Path) -> Result<Self> {
-        Ok(Self {
-            package: OoxmlPackage::open(path)?,
-        })
-    }
-
-    fn from_bytes(bytes: &[u8]) -> Result<Self> {
-        Ok(Self {
-            package: OoxmlPackage::from_bytes(bytes)?,
-        })
-    }
-
     fn replace_text(
         &mut self,
         search: &str,
@@ -77,28 +79,6 @@ impl OfficeDocument for DocxDocument {
 
     fn source_path(&self) -> Option<&Path> {
         self.package.source_path()
-    }
-
-    fn parts(&self) -> Vec<PartName> {
-        self.package.parts()
-    }
-
-    fn read_part(&self, part: &PartName) -> Result<&[u8]> {
-        self.package.read_part(part)
-    }
-
-    fn write_part(&mut self, part: PartName, content: Vec<u8>) -> Result<()> {
-        self.package.write_part(part, content);
-        Ok(())
-    }
-
-    fn remove_part(&mut self, part: &PartName) -> Result<()> {
-        self.package.remove_part(part);
-        Ok(())
-    }
-
-    fn contains_part(&self, part: &PartName) -> bool {
-        self.package.contains_part(part)
     }
 
     fn metadata(&self) -> Result<OfficeMetadata> {

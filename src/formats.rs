@@ -1,6 +1,6 @@
 use crate::OfficeError;
 use crate::formats::docx::DocxDocument;
-use crate::office::OfficeDocument;
+use crate::office::{OfficeDocument, OoxmlDocument};
 use file_format::FileFormat;
 use std::path::Path;
 
@@ -19,12 +19,12 @@ pub mod docx;
 ///
 /// ```
 /// use aigov::document::Severity;
-/// use aigov::{OfficeDocumentFactory, OfficeError, Result};
+/// use aigov::{OfficeError, Result, Document};
 /// use aigov::office::OfficeDocument;
 /// use std::path::Path;
 ///
 /// fn publish(input: &Path, output: &Path) -> Result<()> {
-///     let document = match OfficeDocumentFactory.open(input) {
+///     let document = match Document::from_file(input) {
 ///         Ok(document) => document,
 ///         Err(OfficeError::UnsupportedFileType(path)) => {
 ///             eprintln!("cannot publish unsupported Office file: {path}");
@@ -71,9 +71,28 @@ mod test {
     use std::env::temp_dir;
 
     #[test]
-    fn through_unsupported_file_error() {
+    fn load_from_file() {
         let path = temp_dir().as_path().join("test.docx");
         let _ = minimal_docx().save(path.as_path()).unwrap();
+        assert!(Document::from_file(path).is_ok())
+    }
+
+    #[test]
+    fn through_file_not_found_error() {
+        let path = temp_dir().as_path().join("file-does-not-exist.docx");
+        let error = match Document::from_file(&path).err() {
+            Some(error) => error,
+            None => panic!("Expected an error"),
+        };
+        assert!(
+            matches!(error, OfficeError::Io(ref error) if error.kind() == std::io::ErrorKind::NotFound)
+        );
+    }
+
+    #[test]
+    fn through_unsupported_file_error() {
+        let path = temp_dir().as_path().join("test.xyz");
+        std::fs::write(&path, b"not an Office document").unwrap();
         assert!(Document::from_file(path).is_err())
     }
 }
