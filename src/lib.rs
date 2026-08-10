@@ -6,5 +6,5 @@ pub mod ooxml;
 pub mod package;
 
 pub use error::{OfficeError, Result};
-pub use formats::factory::OfficeDocumentFactory;
+pub use formats::Document;
 pub use office::{metadata, metadata_patch};

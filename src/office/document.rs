@@ -1,14 +1,39 @@
+use super::metadata::OfficeMetadata;
 use crate::document::ValidationIssue;
 use crate::error::Result;
 use crate::package::PartName;
 use std::path::Path;
 
-use super::metadata::OfficeMetadata;
+#[derive(Debug, Clone, Copy, Default)]
+pub struct ReplaceOptions {
+    pub case_matching: CaseMatching,
+}
+
+#[derive(Debug, Clone, Copy, Default)]
+pub enum CaseMatching {
+    #[default]
+    Sensitive,
+    UnicodeInsensitive,
+}
 
 pub trait OfficeDocument {
-    fn open(path: &Path) -> Result<Self>
+    fn from_file(path: &Path) -> Result<Self>
     where
         Self: Sized;
+
+    fn from_bytes(bytes: &[u8]) -> Result<Self>
+    where
+        Self: Sized;
+
+    /// Replaces all occurrences of `search` with `replacement`.
+    ///
+    /// Returns the number of replacements made.
+    fn replace_text(
+        &mut self,
+        search: &str,
+        replacement: &str,
+        options: ReplaceOptions,
+    ) -> Result<usize>;
 
     fn source_path(&self) -> Option<&Path>;
 

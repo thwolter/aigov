@@ -1,8 +1,8 @@
 pub mod metadata;
 pub mod pdf;
+pub mod replace;
 pub mod unzip;
 
-pub use metadata::MetadataArgs;
 use std::path::PathBuf;
 
 use clap::{Parser, Subcommand};
@@ -11,6 +11,10 @@ use clap::{Parser, Subcommand};
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
 pub struct Cli {
+    #[arg(
+        value_name = "FILEPATH",
+        help = "Input document; supported file types depend on the selected command"
+    )]
     pub filepath: PathBuf,
 
     #[command(subcommand)]
@@ -30,6 +34,9 @@ pub enum Commands {
     /// ⚠ Warning: LibreOffice must be installed and the `soffice` command
     /// must be available on `PATH`.
     Pdf(pdf::PdfArgs),
+
+    /// Replace text in an DOCX document.
+    Replace(replace::ReplaceArgs),
 }
 
 #[cfg(test)]

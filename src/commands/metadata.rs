@@ -1,5 +1,5 @@
 use crate::Result;
-use crate::cli::{MetadataArgs, metadata::SetArgs};
+use crate::cli::{metadata::MetadataArgs, metadata::SetArgs};
 use aigov::metadata_patch::MetadataPatch;
 use aigov::ooxml;
 use aigov::package::OoxmlPackage;

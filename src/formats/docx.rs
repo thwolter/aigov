@@ -1,19 +1,25 @@
 use std::path::Path;
 
+use crate::office::document::{CaseMatching, ReplaceOptions};
 use crate::{
     document::ValidationIssue,
     error::Result,
     office::OfficeDocument,
     office::metadata::OfficeMetadata,
-    office::word::WordDocument,
     ooxml,
     package::{OoxmlPackage, PartName},
 };
+use quick_xml::{
+    Reader, Writer,
+    events::{BytesText, Event},
+};
 
-const OFFICE_XML: &str = "word/office.xml";
+const DOCUMENT_XML: &str = "word/document.xml";
 const STYLES_XML: &str = "word/styles.xml";
 const CONTENT_TYPES_XML: &str = "[Content_Types].xml";
 const ROOT_RELS: &str = "_rels/.rels";
+const WORD_PARAGRAPH: &[u8] = b"w:p";
+const WORD_TEXT: &[u8] = b"w:t";
 
 pub struct DocxDocument {
     package: OoxmlPackage,
@@ -21,7 +27,7 @@ pub struct DocxDocument {
 
 impl DocxDocument {
     pub fn document_xml(&self) -> Result<&[u8]> {
-        self.package.read_part(&OFFICE_XML.into())
+        self.package.read_part(&DOCUMENT_XML.into())
     }
 
     pub fn styles_xml(&self) -> Result<Option<&[u8]>> {
@@ -36,10 +42,37 @@ impl DocxDocument {
 }
 
 impl OfficeDocument for DocxDocument {
-    fn open(path: &Path) -> Result<Self> {
+    fn from_file(path: &Path) -> Result<Self> {
         Ok(Self {
             package: OoxmlPackage::open(path)?,
         })
+    }
+
+    fn from_bytes(bytes: &[u8]) -> Result<Self> {
+        Ok(Self {
+            package: OoxmlPackage::from_bytes(bytes)?,
+        })
+    }
+
+    fn replace_text(
+        &mut self,
+        search: &str,
+        replacement: &str,
+        options: ReplaceOptions,
+    ) -> Result<usize> {
+        let part = PartName::new(DOCUMENT_XML);
+        let (count, updated) = replace_document_text(
+            self.package.read_part(&part)?,
+            search,
+            replacement,
+            options.case_matching,
+        )?;
+
+        if count > 0 {
+            self.package.write_part(part, updated);
+        }
+
+        Ok(count)
     }
 
     fn source_path(&self) -> Option<&Path> {
@@ -79,7 +112,7 @@ impl OfficeDocument for DocxDocument {
     fn validate(&self) -> Result<Vec<ValidationIssue>> {
         let mut issues = Vec::new();
 
-        let required_parts = [CONTENT_TYPES_XML, ROOT_RELS, OFFICE_XML];
+        let required_parts = [CONTENT_TYPES_XML, ROOT_RELS, DOCUMENT_XML];
 
         for required_part in required_parts {
             let part = PartName::new(required_part);
@@ -100,68 +133,192 @@ impl OfficeDocument for DocxDocument {
     }
 }
 
-impl WordDocument for DocxDocument {
-    fn replace_text(
-        &mut self,
-        search: &str,
-        replacement: &str,
-        ignore_case: bool,
-    ) -> Result<usize> {
-        let part = PartName::new(OFFICE_XML);
-        let xml = String::from_utf8_lossy(self.package.read_part(&part)?);
+fn replace_document_text(
+    xml: &[u8],
+    search: &str,
+    replacement: &str,
+    case_matching: CaseMatching,
+) -> Result<(usize, Vec<u8>)> {
+    if search.is_empty() {
+        return Ok((0, xml.to_vec()));
+    }
 
-        let (count, updated) = if ignore_case {
-            replace_case_insensitive(&xml, search, replacement)
-        } else {
-            let count = xml.matches(search).count();
-            (count, xml.replace(search, replacement))
-        };
+    let mut reader = Reader::from_reader(xml);
+    let mut writer = Writer::new(Vec::new());
+    let mut buffer = Vec::new();
+    let mut paragraph_events: Option<Vec<Event<'static>>> = None;
+    let mut count = 0;
 
-        if count > 0 {
-            self.package.write_part(part, updated.into_bytes());
+    loop {
+        let event = reader.read_event_into(&mut buffer)?.into_owned();
+
+        match event {
+            Event::Eof => break,
+            Event::Start(start) if start.name().as_ref() == WORD_PARAGRAPH => {
+                if let Some(events) = paragraph_events.as_mut() {
+                    events.push(Event::Start(start));
+                } else {
+                    paragraph_events = Some(vec![Event::Start(start)]);
+                }
+            }
+            Event::End(end)
+                if paragraph_events.is_some() && end.name().as_ref() == WORD_PARAGRAPH =>
+            {
+                paragraph_events
+                    .as_mut()
+                    .expect("paragraph exists")
+                    .push(Event::End(end));
+
+                let (replacements, events) = replace_paragraph_text(
+                    paragraph_events.take().expect("paragraph exists"),
+                    search,
+                    replacement,
+                    case_matching,
+                )?;
+                count += replacements;
+
+                for event in events {
+                    writer.write_event(event)?;
+                }
+            }
+            event => {
+                if let Some(events) = paragraph_events.as_mut() {
+                    events.push(event);
+                } else {
+                    writer.write_event(event)?;
+                }
+            }
         }
 
-        Ok(count)
+        buffer.clear();
+    }
+
+    if paragraph_events.is_some() {
+        return Err(invalid_document("unterminated Word paragraph"));
+    }
+
+    Ok((count, writer.into_inner()))
+}
+
+fn replace_paragraph_text(
+    mut events: Vec<Event<'static>>,
+    search: &str,
+    replacement: &str,
+    case_matching: CaseMatching,
+) -> Result<(usize, Vec<Event<'static>>)> {
+    let mut in_text = false;
+    let mut event_indices = Vec::new();
+    let mut texts = Vec::new();
+
+    for (index, event) in events.iter().enumerate() {
+        match event {
+            Event::Start(start) if start.name().as_ref() == WORD_TEXT => in_text = true,
+            Event::End(end) if end.name().as_ref() == WORD_TEXT => in_text = false,
+            Event::Text(text) if in_text => {
+                event_indices.push(index);
+                texts.push(decode_text(text)?);
+            }
+            _ => {}
+        }
+    }
+
+    let text = texts.concat();
+    let ranges = match_ranges(&text, search, case_matching);
+    apply_replacements(&mut texts, &ranges, replacement);
+
+    for (event_index, text) in event_indices.into_iter().zip(texts) {
+        events[event_index] = Event::Text(BytesText::new(&text).into_owned());
+    }
+
+    Ok((ranges.len(), events))
+}
+
+fn decode_text(text: &BytesText<'_>) -> Result<String> {
+    let text = text
+        .xml10_content()
+        .map_err(|error| invalid_document(format!("invalid Word text: {error}")))?;
+    quick_xml::escape::unescape(&text)
+        .map(|text| text.into_owned())
+        .map_err(|error| invalid_document(format!("invalid Word text: {error}")))
+}
+
+fn match_ranges(text: &str, search: &str, case_matching: CaseMatching) -> Vec<(usize, usize)> {
+    match case_matching {
+        CaseMatching::Sensitive => text
+            .match_indices(search)
+            .map(|(start, matched)| (start, start + matched.len()))
+            .collect(),
+        CaseMatching::UnicodeInsensitive => case_insensitive_ranges(text, search),
     }
 }
 
-fn replace_case_insensitive(xml: &str, search: &str, replacement: &str) -> (usize, String) {
-    if search.is_empty() {
-        return (
-            xml.matches(search).count(),
-            xml.replace(search, replacement),
-        );
-    }
-
+fn case_insensitive_ranges(text: &str, search: &str) -> Vec<(usize, usize)> {
     let folded_search = search.to_lowercase();
-    let mut folded_xml = String::new();
+    let mut folded_text = String::new();
     let mut boundaries = vec![(0, 0)];
 
-    for (start, character) in xml.char_indices() {
-        folded_xml.extend(character.to_lowercase());
-        boundaries.push((folded_xml.len(), start + character.len_utf8()));
+    for (start, character) in text.char_indices() {
+        folded_text.extend(character.to_lowercase());
+        boundaries.push((folded_text.len(), start + character.len_utf8()));
     }
 
-    let ranges: Vec<_> = folded_xml
+    folded_text
         .match_indices(&folded_search)
-        .filter_map(|(start, _)| {
-            let end = start + folded_search.len();
-            let original_start = boundaries
+        .filter_map(|(start, matched)| {
+            let end = start + matched.len();
+            let start_index = boundaries
                 .binary_search_by_key(&start, |entry| entry.0)
                 .ok()?;
-            let original_end = boundaries
+            let end_index = boundaries
                 .binary_search_by_key(&end, |entry| entry.0)
                 .ok()?;
-            Some((boundaries[original_start].1, boundaries[original_end].1))
+            Some((boundaries[start_index].1, boundaries[end_index].1))
         })
-        .collect();
+        .collect()
+}
 
-    let mut updated = xml.to_owned();
-    for (start, end) in ranges.iter().rev() {
-        updated.replace_range(*start..*end, replacement);
+fn apply_replacements(texts: &mut [String], ranges: &[(usize, usize)], replacement: &str) {
+    let spans = text_spans(texts);
+
+    for &(start, end) in ranges.iter().rev() {
+        let first = spans
+            .iter()
+            .position(|span| span.0 <= start && start < span.1)
+            .expect("match starts in a text node");
+        let last = spans
+            .iter()
+            .position(|span| span.0 < end && end <= span.1)
+            .expect("match ends in a text node");
+        let start_offset = start - spans[first].0;
+        let end_offset = end - spans[last].0;
+
+        if first == last {
+            texts[first].replace_range(start_offset..end_offset, replacement);
+        } else {
+            texts[first].replace_range(start_offset.., replacement);
+            for text in &mut texts[first + 1..last] {
+                text.clear();
+            }
+            texts[last].replace_range(..end_offset, "");
+        }
     }
+}
 
-    (ranges.len(), updated)
+fn text_spans(texts: &[String]) -> Vec<(usize, usize)> {
+    let mut offset = 0;
+
+    texts
+        .iter()
+        .map(|text| {
+            let start = offset;
+            offset += text.len();
+            (start, offset)
+        })
+        .collect()
+}
+
+fn invalid_document(message: impl Into<String>) -> crate::OfficeError {
+    crate::OfficeError::InvalidDocument(message.into())
 }
 
 #[cfg(test)]
@@ -192,16 +349,16 @@ pub(crate) mod tests {
     pub(crate) fn minimal_docx() -> DocxDocument {
         docx_document(&[
             (
-                "[Content_Types].xml",
+                CONTENT_TYPES_XML,
                 br#"<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"/>"#,
             ),
             (
-                "_rels/.rels",
+                ROOT_RELS,
                 br#"<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"/>"#,
             ),
             (
-                "word/office.xml",
-                br#"<?xml version="1.0" encoding="UTF-8"?><w:office>Hello world</w:office>"#,
+                DOCUMENT_XML,
+                br#"<?xml version="1.0" encoding="UTF-8"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:p><w:r><w:t>Hello world</w:t></w:r></w:p></w:body></w:document>"#,
             ),
         ])
     }
@@ -217,8 +374,7 @@ pub(crate) mod tests {
 
     #[test]
     fn validates_missing_required_parts() {
-        let document =
-            docx_document(&[("word/office.xml", br#"<w:office>Hello world</w:office>"#)]);
+        let document = docx_document(&[(DOCUMENT_XML, br#"<w:office>Hello world</w:office>"#)]);
 
         let issues = document.validate().unwrap();
 
@@ -232,7 +388,7 @@ pub(crate) mod tests {
         let xml = document.document_xml().unwrap();
 
         assert_eq!(
-            br#"<?xml version="1.0" encoding="UTF-8"?><w:office>Hello world</w:office>"#,
+            br#"<?xml version="1.0" encoding="UTF-8"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:p><w:r><w:t>Hello world</w:t></w:r></w:p></w:body></w:document>"#,
             xml,
         );
     }
@@ -264,7 +420,8 @@ pub(crate) mod tests {
     fn replaces_text_in_document_xml_case_sensitive() {
         let mut document = minimal_docx();
 
-        let count = document.replace_text("Hello", "Goodbye", false).unwrap();
+        let options = ReplaceOptions::default();
+        let count = document.replace_text("Hello", "Goodbye", options).unwrap();
 
         assert_eq!(1, count);
 
@@ -278,7 +435,10 @@ pub(crate) mod tests {
     fn replaces_text_in_document_xml_case_insensitive() {
         let mut document = minimal_docx();
 
-        let count = document.replace_text("hello", "Goodbye", true).unwrap();
+        let options = ReplaceOptions {
+            case_matching: CaseMatching::UnicodeInsensitive,
+        };
+        let count = document.replace_text("hello", "Goodbye", options).unwrap();
 
         assert_eq!(1, count);
 
@@ -286,16 +446,40 @@ pub(crate) mod tests {
 
         assert_eq!(
             xml,
-            r#"<?xml version="1.0" encoding="UTF-8"?><w:office>Goodbye world</w:office>"#
+            r#"<?xml version="1.0" encoding="UTF-8"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:p><w:r><w:t>Goodbye world</w:t></w:r></w:p></w:body></w:document>"#
         );
+    }
+
+    #[test]
+    fn replaces_text_across_word_runs_without_touching_markup() {
+        let mut document = docx_document(&[
+            (CONTENT_TYPES_XML, br#"<Types />"#),
+            (ROOT_RELS, br#"<Relationships />"#),
+            (
+                DOCUMENT_XML,
+                br#"<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:p w:rsidR="Hallo"><w:r><w:t>H</w:t></w:r><w:r><w:t>allo</w:t></w:r></w:p></w:body></w:document>"#,
+            ),
+        ]);
+
+        let count = document
+            .replace_text("Hallo", "Goodbye & <all>", ReplaceOptions::default())
+            .unwrap();
+
+        assert_eq!(1, count);
+        let xml = std::str::from_utf8(document.document_xml().unwrap()).unwrap();
+        assert!(xml.contains(r#"w:rsidR="Hallo""#));
+        assert!(xml.contains("Goodbye &amp; &lt;all&gt;"));
+        assert!(!xml.contains(">H<"));
+        assert!(!xml.contains(">allo<"));
     }
 
     #[test]
     fn does_not_update_document_xml_when_text_is_missing() {
         let mut document = minimal_docx();
 
+        let options = ReplaceOptions::default();
         let count = document
-            .replace_text("Missing", "Replacement", false)
+            .replace_text("Missing", "Replacement", options)
             .unwrap();
 
         assert_eq!(0, count);
