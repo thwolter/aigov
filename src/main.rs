@@ -2,13 +2,13 @@ mod cli;
 mod commands;
 
 use crate::commands::{metadata, pdf, replace, unzip};
-use aigov::Result;
+use aigov::error;
 use clap::{CommandFactory, Parser};
 use cli::{Cli, Commands, metadata::MetadataCommand};
 
 fn main() {
     let args = Cli::parse();
-    let result: Result<()> = match &args.command {
+    let result: error::Result<()> = match &args.command {
         None => print_help(),
         Some(Commands::Unzip(unzip_args)) => unzip::unzip_document(&args.filepath, unzip_args),
         Some(Commands::Metadata(metadata_args)) => match &metadata_args.command {
@@ -28,14 +28,14 @@ fn main() {
     }
 }
 
-fn print_help() -> Result<()> {
+fn print_help() -> error::Result<()> {
     let mut command = Cli::command();
     command.print_help()?;
     println!();
     Ok(())
 }
 
-fn print_set_help() -> Result<()> {
+fn print_set_help() -> error::Result<()> {
     let mut command = Cli::command();
     let metadata = command
         .find_subcommand_mut("metadata")

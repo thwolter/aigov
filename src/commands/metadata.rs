@@ -1,13 +1,13 @@
-use crate::Result;
 use crate::cli::{metadata::MetadataArgs, metadata::SetArgs};
-use aigov::metadata_patch::MetadataPatch;
+use crate::error;
+use aigov::office::metadata::MetadataPatch;
 use aigov::ooxml;
 use aigov::package::OoxmlPackage;
 use std::fs::read_to_string;
 use std::io::{self};
 use std::path::Path;
 
-pub fn show_metadata(filepath: &Path, metadata_args: &MetadataArgs) -> Result<()> {
+pub fn show_metadata(filepath: &Path, metadata_args: &MetadataArgs) -> error::Result<()> {
     let package = OoxmlPackage::from_file(filepath)?;
     let metadata = ooxml::read_metadata(&package)?;
     let metadata = serde_json::json!({
@@ -66,7 +66,7 @@ pub fn show_metadata(filepath: &Path, metadata_args: &MetadataArgs) -> Result<()
     Ok(())
 }
 
-pub fn set_metadata(filepath: &Path, args: &SetArgs) -> Result<()> {
+pub fn set_metadata(filepath: &Path, args: &SetArgs) -> error::Result<()> {
     let mut package = OoxmlPackage::from_file(filepath)?;
     let mut metadata = ooxml::read_metadata(&package)?;
 

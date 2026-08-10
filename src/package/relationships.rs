@@ -1,5 +1,5 @@
 use super::insert_before_closing_tag;
-use crate::Result;
+use crate::error;
 
 pub(crate) const PART_NAME: &str = "_rels/.rels";
 
@@ -8,7 +8,7 @@ pub(crate) fn ensure_relationship(
     id: &str,
     relationship_type: &str,
     target: &str,
-) -> Result<Vec<u8>> {
+) -> error::Result<Vec<u8>> {
     insert_before_closing_tag(
         xml,
         "</Relationships>",

@@ -1,12 +1,13 @@
-use crate::OfficeError;
-use crate::formats::docx::DocxDocument;
-use crate::office::{OfficeDocument, OoxmlDocument};
+mod docx;
+
+use crate::office::OoxmlDocument;
+use crate::{error, office};
 use file_format::FileFormat;
 use std::path::Path;
 
-pub mod docx;
+pub use docx::DocxDocument;
 
-/// Opens Office documents through the format-specific [`OfficeDocument`]
+/// Opens Office documents through the format-specific [`office::OfficeDocument`]
 /// implementation.
 ///
 /// The factory detects the input format and hides the concrete document type
@@ -18,8 +19,11 @@ pub mod docx;
 /// while accepting warnings.
 ///
 /// ```
-/// use aigov::document::Severity;
-/// use aigov::{OfficeError, Result, Document};
+/// use aigov::{
+///     document::Severity,
+///     error::{OfficeError, Result},
+///     formats::Document,
+/// };
 /// use aigov::office::OfficeDocument;
 /// use std::path::Path;
 ///
@@ -48,10 +52,10 @@ pub struct Document;
 impl Document {
     /// Detects the file format at `path` and opens it as an office document.
     ///
-    /// Returns [`OfficeError::Io`] if the file cannot be read,
-    /// [`OfficeError::UnsupportedFileType`] if its detected format is not
+    /// Returns [`error::OfficeError::Io`] if the file cannot be read,
+    /// [`error::OfficeError::UnsupportedFileType`] if its detected format is not
     /// supported, or the error produced while opening a detected DOCX package.
-    pub fn from_file(path: impl AsRef<Path>) -> crate::Result<Box<dyn OfficeDocument>> {
+    pub fn from_file(path: impl AsRef<Path>) -> error::Result<Box<dyn office::OfficeDocument>> {
         let path = path.as_ref();
         let bytes = std::fs::read(path)?;
         let fmt = FileFormat::from_bytes(&bytes);
@@ -59,7 +63,9 @@ impl Document {
         match fmt {
             FileFormat::OfficeOpenXmlDocument => Ok(Box::new(DocxDocument::from_bytes(&bytes)?)),
             // further file formats to be implemented
-            _ => Err(OfficeError::UnsupportedFileType(path.display().to_string())),
+            _ => Err(error::OfficeError::UnsupportedFileType(
+                path.display().to_string(),
+            )),
         }
     }
 }
@@ -68,6 +74,7 @@ impl Document {
 mod test {
     use super::*;
     use crate::formats::docx::tests::minimal_docx;
+    use crate::office::OfficeDocument;
     use std::env::temp_dir;
 
     #[test]
@@ -85,7 +92,7 @@ mod test {
             None => panic!("Expected an error"),
         };
         assert!(
-            matches!(error, OfficeError::Io(ref error) if error.kind() == std::io::ErrorKind::NotFound)
+            matches!(error, error::OfficeError::Io(ref error) if error.kind() == std::io::ErrorKind::NotFound)
         );
     }
 

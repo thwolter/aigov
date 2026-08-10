@@ -1,4 +1,4 @@
-use aigov::office::document::{CaseMatching, ReplaceOptions};
+use aigov::office::replacement::{CaseMatching, ReplaceOptions};
 use clap::{ArgGroup, Args};
 use std::path::PathBuf;
 

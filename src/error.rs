@@ -11,7 +11,7 @@ use crate::package::PartName;
 /// # Examples
 ///
 /// ```
-/// use aigov::{OfficeError, Result};
+/// use aigov::error::{OfficeError, Result};
 /// use std::path::Path;
 ///
 /// fn open_document(path: &Path) -> Result<()> {

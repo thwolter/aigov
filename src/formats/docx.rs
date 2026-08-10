@@ -2,9 +2,11 @@ mod replacement;
 
 use std::path::Path;
 
-use crate::office::document::{OoxmlDocument, ReplaceOptions};
+use crate::office::OoxmlDocument;
+use crate::office::replacement::ReplaceOptions;
 use crate::{
     document::ValidationIssue,
+    error,
     error::Result,
     office::OfficeDocument,
     office::metadata::OfficeMetadata,
@@ -17,15 +19,51 @@ const STYLES_XML: &str = "word/styles.xml";
 const CONTENT_TYPES_XML: &str = "[Content_Types].xml";
 const ROOT_RELS: &str = "_rels/.rels";
 
+/// A mutable DOCX document backed by an OOXML package.
+///
+/// `DocxDocument` provides DOCX-specific access to `word/document.xml` and
+/// `word/styles.xml`. For metadata, validation, and saving, use the
+/// [`OfficeDocument`] trait. The [`OoxmlDocument`] trait provides construction
+/// from a file, bytes, or an existing package.
+///
+/// # Examples
+///
+/// ```no_run
+/// use aigov::{
+///     document::Severity,
+///     formats::DocxDocument,
+///     office::{OfficeDocument, OoxmlDocument},
+/// };
+/// use std::path::Path;
+///
+/// let mut document = <DocxDocument as OoxmlDocument>::from_file(Path::new("report.docx"))?;
+/// document.replace_text("Draft", "Final", Default::default())?;
+///
+/// if document
+///     .validate()?
+///     .iter()
+///     .any(|issue| issue.severity == Severity::Error)
+/// {
+///     return Err("refusing to publish an invalid DOCX".into());
+/// }
+///
+/// document.save(Path::new("published-report.docx"))?;
+/// # Ok::<(), Box<dyn std::error::Error>>(())
+/// ```
 pub struct DocxDocument {
     package: OoxmlPackage,
 }
 
 impl DocxDocument {
+    /// Returns the raw `word/document.xml` part.
+    ///
+    /// This is DOCX-specific. Prefer [`OfficeDocument::replace_text`] for
+    /// ordinary visible-text edits.
     pub fn document_xml(&self) -> Result<&[u8]> {
         self.package.read_part(&DOCUMENT_XML.into())
     }
 
+    /// Returns the raw `word/styles.xml` part when the document contains one.
     pub fn styles_xml(&self) -> Result<Option<&[u8]>> {
         let part = PartName::new(STYLES_XML);
 
@@ -109,8 +147,8 @@ impl OfficeDocument for DocxDocument {
     }
 }
 
-fn invalid_document(message: impl Into<String>) -> crate::OfficeError {
-    crate::OfficeError::InvalidDocument(message.into())
+fn invalid_document(message: impl Into<String>) -> error::OfficeError {
+    error::OfficeError::InvalidDocument(message.into())
 }
 
 #[cfg(test)]
@@ -119,7 +157,7 @@ pub(crate) mod tests {
 
     use zip::{ZipWriter, write::SimpleFileOptions};
 
-    use crate::office::document::CaseMatching;
+    use crate::office::replacement::CaseMatching;
 
     use super::*;
 

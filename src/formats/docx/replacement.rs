@@ -1,5 +1,6 @@
+use crate::error;
 use crate::formats::docx;
-use crate::office::document::{CaseMatching, ReplaceOptions};
+use crate::office::replacement::{CaseMatching, ReplaceOptions};
 use quick_xml::events::{BytesText, Event};
 use quick_xml::{Reader, Writer};
 
@@ -12,7 +13,7 @@ pub fn replace_document_text(
     search: &str,
     replacement: &str,
     options: ReplaceOptions,
-) -> crate::Result<(usize, Vec<u8>)> {
+) -> error::Result<(usize, Vec<u8>)> {
     if search.is_empty() {
         return Ok((0, xml.to_vec()));
     }
@@ -80,7 +81,7 @@ fn replace_paragraph_text(
     search: &str,
     replacement: &str,
     case_matching: CaseMatching,
-) -> crate::Result<(usize, Vec<Event<'static>>)> {
+) -> error::Result<(usize, Vec<Event<'static>>)> {
     let mut in_text = false;
     let mut event_indices = Vec::new();
     let mut texts = Vec::new();
@@ -109,7 +110,7 @@ fn replace_paragraph_text(
 }
 
 /// Decodes an XML text event into its unescaped Word text value.
-fn decode_text(text: &BytesText<'_>) -> crate::Result<String> {
+fn decode_text(text: &BytesText<'_>) -> error::Result<String> {
     let text = text
         .xml10_content()
         .map_err(|error| docx::invalid_document(format!("invalid Word text: {error}")))?;

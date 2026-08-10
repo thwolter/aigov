@@ -30,7 +30,7 @@ pub use part::PartName;
 /// use aigov::package::{OoxmlPackage, PartName};
 /// use std::path::Path;
 ///
-/// # fn main() -> aigov::Result<()> {
+/// # fn main() -> aigov::error::Result<()> {
 /// let mut package = OoxmlPackage::from_file("report.docx")?;
 /// let document = PartName::from("word/document.xml");
 ///

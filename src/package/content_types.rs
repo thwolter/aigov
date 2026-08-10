@@ -1,9 +1,13 @@
 use super::insert_before_closing_tag;
-use crate::Result;
+use crate::error;
 
 pub(crate) const PART_NAME: &str = "[Content_Types].xml";
 
-pub(crate) fn ensure_override(xml: &[u8], part_name: &str, content_type: &str) -> Result<Vec<u8>> {
+pub(crate) fn ensure_override(
+    xml: &[u8],
+    part_name: &str,
+    content_type: &str,
+) -> error::Result<Vec<u8>> {
     insert_before_closing_tag(
         xml,
         "</Types>",

@@ -1,4 +1,4 @@
-use crate::OfficeError;
+use crate::error;
 use quick_xml::events::{BytesEnd, BytesStart, BytesText, Event};
 use quick_xml::{Reader, Writer};
 
@@ -20,7 +20,7 @@ fn parse_text_element(name: &[u8], value: String) -> TextElement {
 ///
 /// The root element is ignored. Child elements are returned with their
 /// namespace prefix removed from the name.
-pub(in crate::ooxml) fn parse_text_elements(xml: &[u8]) -> crate::Result<Vec<TextElement>> {
+pub(in crate::ooxml) fn parse_text_elements(xml: &[u8]) -> error::Result<Vec<TextElement>> {
     let mut reader = Reader::from_reader(xml);
     let mut buffer = Vec::new();
     let mut elements = Vec::new();
@@ -101,8 +101,8 @@ pub(in crate::ooxml) fn parse_text_elements(xml: &[u8]) -> crate::Result<Vec<Tex
     Ok(elements)
 }
 
-fn invalid_property_text(error: impl std::fmt::Display) -> OfficeError {
-    OfficeError::InvalidDocument(format!("Invalid metadata property text: {error}"))
+fn invalid_property_text(error: impl std::fmt::Display) -> error::OfficeError {
+    error::OfficeError::InvalidDocument(format!("Invalid metadata property text: {error}"))
 }
 
 /// Writes a text element to the XML writer.
@@ -110,7 +110,7 @@ pub(in crate::ooxml) fn write_text_element(
     writer: &mut Writer<Vec<u8>>,
     name: &str,
     value: &str,
-) -> crate::Result<()> {
+) -> error::Result<()> {
     writer.write_event(Event::Start(BytesStart::new(name)))?;
     writer.write_event(Event::Text(BytesText::new(value)))?;
     writer.write_event(Event::End(BytesEnd::new(name)))?;

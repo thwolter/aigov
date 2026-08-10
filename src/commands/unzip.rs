@@ -1,10 +1,11 @@
 use crate::cli::unzip::UnzipArgs;
+use aigov::error;
 use std::fs::File;
 use std::path::Path;
 use zip::ZipArchive;
 
 /// Unzip a office and store its contents in a subfolder
-pub fn unzip_document(filepath: &Path, args: &UnzipArgs) -> crate::Result<()> {
+pub fn unzip_document(filepath: &Path, args: &UnzipArgs) -> error::Result<()> {
     let file = File::open(filepath)?;
     let mut archive = ZipArchive::new(file)?;
     let output_directory = args

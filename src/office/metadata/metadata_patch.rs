@@ -1,5 +1,5 @@
-use super::metadata::OfficeMetadata;
 use crate::error::Result;
+use crate::office::metadata::OfficeMetadata;
 use serde::{Deserialize, Deserializer};
 use std::collections::BTreeMap;
 
@@ -13,7 +13,7 @@ use std::collections::BTreeMap;
 /// # Examples
 ///
 /// ```
-/// use aigov::{metadata::OfficeMetadata, metadata_patch::MetadataPatch};
+/// use aigov::office::metadata::{MetadataPatch, OfficeMetadata};
 ///
 /// let mut metadata = OfficeMetadata::default();
 /// let patch = MetadataPatch::from_json(
@@ -23,7 +23,7 @@ use std::collections::BTreeMap;
 ///
 /// assert_eq!(metadata.core.title.as_deref(), Some("New title"));
 /// assert_eq!(metadata.core.keywords, ["rust", "office"]);
-/// # Ok::<(), aigov::OfficeError>(())
+/// # Ok::<(), aigov::error::OfficeError>(())
 /// ```
 #[derive(Debug, Default, Deserialize)]
 #[serde(deny_unknown_fields)]

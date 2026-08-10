@@ -1,4 +1,4 @@
-use aigov::metadata_patch::MetadataPatch;
+use aigov::office::metadata::MetadataPatch;
 use clap::{Args, Subcommand};
 use std::collections::BTreeMap;
 use std::path::PathBuf;
