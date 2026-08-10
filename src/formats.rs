@@ -1,17 +1,18 @@
 mod docx;
 
-use crate::office::OoxmlDocument;
+use crate::office::{OfficeDocument, OoxmlDocument};
 use crate::{error, office};
 use file_format::FileFormat;
 use std::path::Path;
 
+use crate::office::policy;
 pub use docx::DocxDocument;
 
 /// Opens Office documents through the format-specific [`office::OfficeDocument`]
 /// implementation.
 ///
-/// The factory detects the input format and hides the concrete document type
-/// behind a trait object. DOCX is currently the only supported format.
+/// The factory detects the input format and returns its concrete document
+/// variant. DOCX is currently the only supported format.
 ///
 /// # Examples
 ///
@@ -47,7 +48,9 @@ pub use docx::DocxDocument;
 /// }
 /// # let _ = publish;
 /// ```
-pub struct Document;
+pub enum Document {
+    Docx(DocxDocument),
+}
 
 impl Document {
     /// Detects the file format at `path` and opens it as an office document.
@@ -55,17 +58,66 @@ impl Document {
     /// Returns [`error::OfficeError::Io`] if the file cannot be read,
     /// [`error::OfficeError::UnsupportedFileType`] if its detected format is not
     /// supported, or the error produced while opening a detected DOCX package.
-    pub fn from_file(path: impl AsRef<Path>) -> error::Result<Box<dyn office::OfficeDocument>> {
+    pub fn from_file(path: impl AsRef<Path>) -> error::Result<Self> {
         let path = path.as_ref();
         let bytes = std::fs::read(path)?;
         let fmt = FileFormat::from_bytes(&bytes);
 
         match fmt {
-            FileFormat::OfficeOpenXmlDocument => Ok(Box::new(DocxDocument::from_bytes(&bytes)?)),
+            FileFormat::OfficeOpenXmlDocument => Ok(Self::Docx(DocxDocument::from_bytes(&bytes)?)),
             // further file formats to be implemented
             _ => Err(error::OfficeError::UnsupportedFileType(
                 path.display().to_string(),
             )),
+        }
+    }
+
+    pub fn as_ai_policy_document(&mut self) -> Option<&mut dyn policy::AiPolicyDocument> {
+        match self {
+            Self::Docx(document) => Some(document),
+        }
+    }
+}
+
+impl OfficeDocument for Document {
+    fn replace_text(
+        &mut self,
+        search: &str,
+        replacement: &str,
+        options: office::replacement::ReplaceOptions,
+    ) -> error::Result<usize> {
+        match self {
+            Self::Docx(document) => document.replace_text(search, replacement, options),
+        }
+    }
+
+    fn source_path(&self) -> Option<&Path> {
+        match self {
+            Self::Docx(document) => document.source_path(),
+        }
+    }
+
+    fn metadata(&self) -> error::Result<office::metadata::OfficeMetadata> {
+        match self {
+            Self::Docx(document) => document.metadata(),
+        }
+    }
+
+    fn set_metadata(&mut self, metadata: &office::metadata::OfficeMetadata) -> error::Result<()> {
+        match self {
+            Self::Docx(document) => document.set_metadata(metadata),
+        }
+    }
+
+    fn validate(&self) -> error::Result<Vec<crate::document::ValidationIssue>> {
+        match self {
+            Self::Docx(document) => document.validate(),
+        }
+    }
+
+    fn save(&self, destination: &Path) -> error::Result<()> {
+        match self {
+            Self::Docx(document) => document.save(destination),
         }
     }
 }

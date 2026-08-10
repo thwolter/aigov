@@ -1,8 +1,8 @@
+mod policy;
 mod replacement;
 
-use std::path::Path;
-
 use crate::office::OoxmlDocument;
+use crate::office::policy::{AiPolicy, AiPolicyDocument};
 use crate::office::replacement::ReplaceOptions;
 use crate::{
     document::ValidationIssue,
@@ -13,6 +13,8 @@ use crate::{
     ooxml,
     package::{OoxmlPackage, PartName},
 };
+use quick_xml::{Reader, Writer};
+use std::path::Path;
 
 const DOCUMENT_XML: &str = "word/document.xml";
 const STYLES_XML: &str = "word/styles.xml";
@@ -149,6 +151,28 @@ impl OfficeDocument for DocxDocument {
 
 fn invalid_document(message: impl Into<String>) -> error::OfficeError {
     error::OfficeError::InvalidDocument(message.into())
+}
+
+impl AiPolicyDocument for DocxDocument {
+    fn policy(&self) -> error::Result<Option<AiPolicy>> {
+        let mut reader = Reader::from_reader(self.package.read_part(&DOCUMENT_XML.into())?);
+        policy::read_policy_from_document_xml(&mut reader)
+    }
+
+    fn inject_policy(&mut self, policy: &AiPolicy) -> error::Result<()> {
+        let part = PartName::new(DOCUMENT_XML);
+        let mut reader = Reader::from_reader(self.package.read_part(&part)?);
+        let mut writer = Writer::new(Vec::new());
+
+        let injected = policy::write_hidden_policy_paragraph(policy, &mut reader, &mut writer)?;
+
+        if !injected {
+            return Err(invalid_document("Word document has no body element"));
+        }
+
+        self.package.write_part(part, writer.into_inner());
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -348,5 +372,21 @@ pub(crate) mod tests {
         assert!(custom.contains("Acme &amp; Co"));
         assert!(content_types.contains("/docProps/custom.xml"));
         assert!(relationships.contains("custom-properties"));
+    }
+
+    #[test]
+    fn injects_and_reads_ai_policy() {
+        let mut document = minimal_docx();
+        let policy = AiPolicy {
+            id: "internal-use".into(),
+            human_review_required: true,
+            training_allowed: false,
+            attribution_required: true,
+            owner: Some("legal".into()),
+        };
+
+        document.inject_policy(&policy).unwrap();
+
+        assert_eq!(document.policy().unwrap(), Some(policy));
     }
 }

@@ -67,6 +67,9 @@ pub enum OfficeError {
         tool: &'static str,
         command: &'static str,
     },
+
+    #[error("AI policy error: {0}")]
+    InvalidAiPolicy(String),
 }
 
 /// The result type used by the library's public APIs.

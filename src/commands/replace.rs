@@ -1,6 +1,7 @@
 use crate::cli::replace::ReplaceArgs;
 use aigov::error::Result;
 use aigov::formats::Document;
+use aigov::office::OfficeDocument;
 use std::path::Path;
 
 pub fn replace(filepath: &Path, args: &ReplaceArgs) -> Result<()> {

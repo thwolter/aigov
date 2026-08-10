@@ -3,7 +3,7 @@ use quick_xml::events::{BytesEnd, BytesStart, BytesText, Event};
 use quick_xml::{Reader, Writer};
 
 #[derive(Debug, PartialEq, Eq)]
-pub(in crate::ooxml) struct TextElement {
+pub struct TextElement {
     pub name: Vec<u8>,
     pub value: String,
 }
@@ -20,7 +20,7 @@ fn parse_text_element(name: &[u8], value: String) -> TextElement {
 ///
 /// The root element is ignored. Child elements are returned with their
 /// namespace prefix removed from the name.
-pub(in crate::ooxml) fn parse_text_elements(xml: &[u8]) -> error::Result<Vec<TextElement>> {
+pub fn parse_text_elements(xml: &[u8]) -> error::Result<Vec<TextElement>> {
     let mut reader = Reader::from_reader(xml);
     let mut buffer = Vec::new();
     let mut elements = Vec::new();
@@ -32,7 +32,6 @@ pub(in crate::ooxml) fn parse_text_elements(xml: &[u8]) -> error::Result<Vec<Tex
         match reader.read_event_into(&mut buffer)? {
             Event::Start(element) => {
                 depth += 1;
-
                 // The root element is at depth 1. Parse its children.
                 if depth > 1 && current.is_none() {
                     current = Some((element.local_name().as_ref().to_vec(), String::new(), depth));
@@ -48,9 +47,7 @@ pub(in crate::ooxml) fn parse_text_elements(xml: &[u8]) -> error::Result<Vec<Tex
 
             Event::Text(text) if current.is_some() => {
                 let text = text.xml10_content().map_err(invalid_property_text)?;
-
                 let text = quick_xml::escape::unescape(&text).map_err(invalid_property_text)?;
-
                 if let Some((_, value, _)) = current.as_mut() {
                     value.push_str(&text);
                 }
@@ -58,11 +55,9 @@ pub(in crate::ooxml) fn parse_text_elements(xml: &[u8]) -> error::Result<Vec<Tex
 
             Event::GeneralRef(reference) if current.is_some() => {
                 let reference = reference.xml10_content().map_err(invalid_property_text)?;
-
                 let reference = format!("&{reference};");
                 let reference =
                     quick_xml::escape::unescape(&reference).map_err(invalid_property_text)?;
-
                 if let Some((_, value, _)) = current.as_mut() {
                     value.push_str(&reference);
                 }
@@ -70,7 +65,6 @@ pub(in crate::ooxml) fn parse_text_elements(xml: &[u8]) -> error::Result<Vec<Tex
 
             Event::CData(text) if current.is_some() => {
                 let text = text.xml10_content().map_err(invalid_property_text)?;
-
                 if let Some((_, value, _)) = current.as_mut() {
                     value.push_str(&text);
                 }
@@ -80,10 +74,8 @@ pub(in crate::ooxml) fn parse_text_elements(xml: &[u8]) -> error::Result<Vec<Tex
                 let finished = current
                     .as_ref()
                     .is_some_and(|(_, _, element_depth)| *element_depth == depth);
-
                 if finished {
                     let (name, value, _) = current.take().expect("element exists");
-
                     elements.push(parse_text_element(&name, value));
                 }
 
@@ -91,7 +83,6 @@ pub(in crate::ooxml) fn parse_text_elements(xml: &[u8]) -> error::Result<Vec<Tex
             }
 
             Event::Eof => break,
-
             _ => {}
         }
 
@@ -101,12 +92,8 @@ pub(in crate::ooxml) fn parse_text_elements(xml: &[u8]) -> error::Result<Vec<Tex
     Ok(elements)
 }
 
-fn invalid_property_text(error: impl std::fmt::Display) -> error::OfficeError {
-    error::OfficeError::InvalidDocument(format!("Invalid metadata property text: {error}"))
-}
-
 /// Writes a text element to the XML writer.
-pub(in crate::ooxml) fn write_text_element(
+pub fn write_text_element(
     writer: &mut Writer<Vec<u8>>,
     name: &str,
     value: &str,
@@ -116,4 +103,8 @@ pub(in crate::ooxml) fn write_text_element(
     writer.write_event(Event::End(BytesEnd::new(name)))?;
 
     Ok(())
+}
+
+fn invalid_property_text(error: impl std::fmt::Display) -> error::OfficeError {
+    error::OfficeError::InvalidDocument(format!("Invalid metadata property text: {error}"))
 }

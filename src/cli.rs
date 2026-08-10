@@ -1,5 +1,6 @@
 pub mod metadata;
 pub mod pdf;
+pub mod policy;
 pub mod replace;
 pub mod unzip;
 
@@ -26,7 +27,7 @@ pub enum Commands {
     /// Unzip a office document and store its contents.
     Unzip(unzip::UnzipArgs),
 
-    /// Set/show metadata for a office document.
+    /// Manage the document's metadata.
     Metadata(Box<metadata::MetadataArgs>),
 
     /// Convert an Office document to PDF using LibreOffice.
@@ -37,6 +38,9 @@ pub enum Commands {
 
     /// Replace text in an DOCX document.
     Replace(replace::ReplaceArgs),
+
+    /// Manage the document's policy.
+    Policy(policy::PolicyArgs),
 }
 
 #[cfg(test)]

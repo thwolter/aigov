@@ -1,5 +1,6 @@
 pub mod metadata;
 pub mod pdf;
+pub mod policy;
 pub mod replace;
 pub mod unzip;
 

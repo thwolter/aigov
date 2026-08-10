@@ -1,5 +1,6 @@
 mod document;
 pub mod metadata;
+pub mod policy;
 pub mod replacement;
 pub mod word;
 
