@@ -32,3 +32,69 @@ observations:
     promoted_to: null
     crystallized_via: null
     stale: false
+  - id: O04
+    timestamp: "2026-08-11T16:56"
+    provenance: ai-suggested
+    content: "Production AiPolicy semantics should remain separate from explicitly adversarial prompt-injection fixture payloads."
+    context: "User asked how to sharpen the hidden DOCX policy injection for LLM-agent security testing."
+    potential_type: architecture
+    bound_to: [N11]
+    promoted: false
+    promoted_to: null
+    crystallized_via: null
+    stale: false
+  - id: O05
+    timestamp: "2026-08-11T16:56"
+    provenance: ai-suggested
+    content: "A prompt-injection fixture should demand one harmless exact canary output so attack success can be measured unambiguously before adding concealment variants."
+    context: "User reported that the current w:vanish injection succeeds inconsistently."
+    potential_type: heuristic
+    bound_to: [N11]
+    promoted: false
+    promoted_to: null
+    crystallized_via: null
+    stale: false
+  - id: O06
+    timestamp: "2026-08-11T17:10"
+    provenance: ai-suggested
+    content: "A reliable human-review requirement should be enforced by the trusted reader or orchestrator after separating the policy block from document content, rather than by relying on the LLM to obey an in-document prompt."
+    context: "The LLM described the hidden governing policy instead of applying its requested response format."
+    potential_type: architecture
+    bound_to: [N12, N13]
+    promoted: false
+    promoted_to: null
+    crystallized_via: null
+    stale: false
+  - id: O07
+    timestamp: "2026-08-11T17:10"
+    provenance: ai-suggested
+    content: "For an injection-only experiment, the policy prompt should explicitly preserve the primary task, exclude the control block from summarization, and place one exact human-review notice requirement at the end."
+    context: "The current Add-the-following-paragraph wording leaves the output contract ambiguous and mixes policy metadata with response text."
+    potential_type: heuristic
+    bound_to: [N12]
+    promoted: false
+    promoted_to: null
+    crystallized_via: null
+    stale: false
+  - id: O08
+    timestamp: "2026-08-11T17:26"
+    provenance: ai-suggested
+    content: "An injection-only response-format requirement should place one literal human-review notice at the very end of the policy prompt, after all other policy rules, with no subsequent text."
+    context: "The current prompt says append exactly this notice and then supplies several distinct policy instructions, so the model omits the intended notice."
+    potential_type: heuristic
+    bound_to: [N14]
+    promoted: false
+    promoted_to: null
+    crystallized_via: null
+    stale: false
+  - id: O09
+    timestamp: "2026-08-11T17:31"
+    provenance: ai-suggested
+    content: "Policy identity should remain machine-detectable while being absent from LLM-visible prompt text; a structural OOXML marker or extractor-side prefix removal preserves lifecycle operations without priming the model to classify the block as metadata."
+    context: "The current text prefix is required by has_policy_marker and rewrite_hidden_policy but appears in the model input."
+    potential_type: architecture
+    bound_to: [N15]
+    promoted: false
+    promoted_to: null
+    crystallized_via: null
+    stale: false

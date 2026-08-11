@@ -81,3 +81,100 @@ tree:
     timestamp: "2026-08-11T10:17"
     description: "How should policy injection, update, removal, and validation be exposed in the CLI?"
     status: open
+  - id: N10
+    type: experiment
+    title: "DOCX policy removal and reinjection placement"
+    provenance: ai-executed
+    timestamp: "2026-08-11T13:11"
+    result: >
+      A focused regression confirmed that inject, remove, then inject reproduces
+      identical document XML and places the hidden policy paragraph immediately
+      before body-level section properties. Both policy tests passed; the full
+      library suite passed, while the unrelated LibreOffice PDF test still
+      aborted with SIGABRT.
+    evidence: ["cargo test formats::docx::policy::tests", "cargo test"]
+    status: resolved
+  - id: N11
+    type: question
+    title: "Stronger DOCX prompt-injection probe"
+    provenance: user
+    timestamp: "2026-08-11T16:56"
+    description: >
+      How should hidden policy injection be sharpened into a stronger test document
+      so an LLM document reader can be hardened against prompt injection?
+    status: open
+  - id: N12
+    type: experiment
+    title: "Governing policy interpreted as document content"
+    provenance: user
+    timestamp: "2026-08-11T17:10"
+    result: >
+      The LLM summarized the hidden aigov policy block and its behavioral constraints
+      instead of producing the ordinary document summary followed by the required
+      human-review notice.
+    evidence: ["user-provided LLM output"]
+    status: resolved
+  - id: N13
+    type: pivot
+    title: "Return from canary probe to governing policy"
+    provenance: user
+    timestamp: "2026-08-11T17:10"
+    from: "Exact-output prompt-injection canary"
+    to: "Document governance policy requiring normal summary plus human-review notice"
+    trigger: "The desired test is realistic persistent governance behavior rather than a fixed-output canary."
+    status: resolved
+  - id: N14
+    type: experiment
+    title: "Task-preserving policy excludes itself but omits notice"
+    provenance: user
+    timestamp: "2026-08-11T17:26"
+    result: >
+      The LLM summarized only the two ordinary document statements and explicitly
+      excluded the processing instructions as non-substantive content, but did not
+      append the requested human-review notice.
+    evidence: ["user-provided LLM output", "src/office/policy.rs"]
+    status: resolved
+  - id: N15
+    type: question
+    title: "Policy marker visibility"
+    provenance: user
+    timestamp: "2026-08-11T17:31"
+    description: "Should the textual aigov:policy prefix be removed to improve injected-policy adherence?"
+    status: open
+  - id: N16
+    type: decision
+    title: "Honor policy injection output path"
+    provenance: user
+    timestamp: "2026-08-11T17:45"
+    choice: "Policy injection must save the modified document to the output path supplied to the inject subcommand."
+    alternatives: ["Always overwrite the input document"]
+    evidence: ["src/cli/policy.rs"]
+    status: resolved
+  - id: N17
+    type: experiment
+    title: "Policy injection output routing verification"
+    provenance: ai-executed
+    timestamp: "2026-08-11T17:45"
+    result: >
+      Moving output-path resolution outside the Inject match arm eliminated variable
+      shadowing. Both policy CLI tests passed, and an end-to-end command created the
+      requested output DOCX containing the injected processing-control block.
+    evidence: ["cargo test --bin aigov cli::policy::tests", "cargo run --quiet -- data/test.docx policy inject --output /tmp/aigov-policy-output-test.docx --preset standard"]
+    status: resolved
+  - id: N18
+    type: experiment
+    title: "Policy prefix removal"
+    provenance: user
+    timestamp: "2026-08-11T17:53"
+    result: "Removing the textual POLICY_PREFIX produced no observable change in the LLM response."
+    evidence: ["user-reported A/B result"]
+    status: resolved
+  - id: N19
+    type: dead_end
+    title: "Textual prefix as primary rejection cue"
+    provenance: user
+    timestamp: "2026-08-11T17:53"
+    hypothesis: "The aigov:policy prefix materially causes the LLM to classify and reject the governing instruction block."
+    failure_mode: "Removing the prefix did not change model behavior."
+    lesson: "Restore the lifecycle marker and focus subsequent tests on instruction semantics and the reader/model trust boundary."
+    status: resolved

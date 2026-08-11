@@ -239,8 +239,6 @@ mod tests {
 
         let xml = std::str::from_utf8(document.document_xml().unwrap()).unwrap();
         assert!(xml.contains("w:vanish"));
-        assert!(xml.contains("AI GOVERNANCE POLICY"));
-        assert!(xml.contains("Policy ID: internal-use"));
         assert!(xml.contains(POLICY_PREFIX));
         assert!(document.has_policy().unwrap());
 
@@ -260,5 +258,22 @@ mod tests {
         assert!(!xml.contains(POLICY_PREFIX));
         assert!(!document.remove_policy().unwrap());
         assert!(document.update_policy(&updated).is_err());
+    }
+
+    #[test]
+    fn reinjects_policy_before_section_properties() {
+        let mut document = minimal_docx();
+        document.package.write_part(
+            "word/document.xml".into(),
+            br#"<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:p><w:r><w:t>Hello world</w:t></w:r></w:p><w:sectPr/></w:body></w:document>"#.to_vec(),
+        );
+        let policy = AiPolicy::default();
+
+        document.inject_policy(&policy).unwrap();
+        let first_injection = document.document_xml().unwrap().to_vec();
+        assert!(document.remove_policy().unwrap());
+        document.inject_policy(&policy).unwrap();
+
+        assert_eq!(first_injection, document.document_xml().unwrap());
     }
 }

@@ -2,9 +2,9 @@ session:
   id: "2026-08-11_001"
   date: "2026-08-11"
   started: "2026-08-11T08:02"
-  last_turn: "2026-08-11T10:17"
-  turn_count: 8
-  summary: "Implemented CLI policy presets; designing lifecycle commands and validation."
+  last_turn: "2026-08-11T17:53"
+  turn_count: 15
+  summary: "Ruled out the textual policy prefix as the cause of instruction rejection."
 
 events_logged:
   - turn: 1
@@ -85,6 +85,102 @@ events_logged:
     routing: staged
     provenance: ai-suggested
     summary: "Use nested lifecycle subcommands and canonical-prompt validation."
+  - turn: 9
+    type: experiment
+    id: N10
+    routing: direct
+    provenance: ai-executed
+    summary: "Remove and reinject reproduced identical XML with the policy before body section properties."
+  - turn: 10
+    type: question
+    id: N11
+    routing: direct
+    provenance: user
+    summary: "How should hidden DOCX injection be strengthened for LLM-reader security testing?"
+  - turn: 10
+    type: observation
+    id: O04
+    routing: staged
+    provenance: ai-suggested
+    summary: "Separate production policy semantics from adversarial fixture payloads."
+  - turn: 10
+    type: observation
+    id: O05
+    routing: staged
+    provenance: ai-suggested
+    summary: "Use an exact harmless canary as the first measurable attack payload."
+  - turn: 11
+    type: experiment
+    id: N12
+    routing: direct
+    provenance: user
+    summary: "The LLM described the governing policy instead of applying its response format."
+  - turn: 11
+    type: pivot
+    id: N13
+    routing: direct
+    provenance: user
+    summary: "Returned from a fixed-output canary to a realistic governing policy."
+  - turn: 11
+    type: observation
+    id: O06
+    routing: staged
+    provenance: ai-suggested
+    summary: "Enforce verified policy effects outside the document-content prompt."
+  - turn: 11
+    type: observation
+    id: O07
+    routing: staged
+    provenance: ai-suggested
+    summary: "Make any injection-only response contract explicit and task-preserving."
+  - turn: 12
+    type: experiment
+    id: N14
+    routing: direct
+    provenance: user
+    summary: "The LLM excluded policy content correctly but omitted the requested human-review notice."
+  - turn: 12
+    type: observation
+    id: O08
+    routing: staged
+    provenance: ai-suggested
+    summary: "Put one literal notice last, after every other policy rule."
+  - turn: 13
+    type: question
+    id: N15
+    routing: direct
+    provenance: user
+    summary: "Should the textual policy prefix be removed to improve adherence?"
+  - turn: 13
+    type: observation
+    id: O09
+    routing: staged
+    provenance: ai-suggested
+    summary: "Keep a machine marker but omit it from LLM-visible text."
+  - turn: 14
+    type: decision
+    id: N16
+    routing: direct
+    provenance: user
+    summary: "Policy inject must honor its requested output path."
+  - turn: 14
+    type: experiment
+    id: N17
+    routing: direct
+    provenance: ai-executed
+    summary: "Output routing regression and end-to-end policy injection passed."
+  - turn: 15
+    type: experiment
+    id: N18
+    routing: direct
+    provenance: user
+    summary: "Removing POLICY_PREFIX did not change the LLM output."
+  - turn: 15
+    type: dead_end
+    id: N19
+    routing: direct
+    provenance: user
+    summary: "Rejected the prefix-as-primary-cue hypothesis."
 
 ai_actions:
   - turn: 1
@@ -107,6 +203,14 @@ ai_actions:
     action: "Renamed the CLI preset enum, added three preset policies, wired selection into injection, and ran the focused test."
     provenance: ai-executed
     files_changed: ["src/cli/policy.rs"]
+  - turn: 9
+    action: "Added and ran a focused regression for DOCX policy removal and reinjection placement."
+    provenance: ai-executed
+    files_changed: ["src/formats/docx/policy.rs"]
+  - turn: 14
+    action: "Resolved the inject destination outside the match arm, added a regression test, and verified requested-path output end to end."
+    provenance: ai-executed
+    files_changed: ["src/cli/policy.rs"]
 
 claims_touched: []
 logic_revisions: []
@@ -115,7 +219,29 @@ key_context:
     excerpt: "check docx/policy.rs and ensure the test passes"
   - turn: 3
     excerpt: "implement functions for delete and update the policy"
-open_threads: []
+  - turn: 9
+    excerpt: "injecting -> removing -> injecting places the policy wrongly"
+  - turn: 10
+    excerpt: "we need to sharpen the injection in our document so that we can adjust our llm agent"
+  - turn: 11
+    excerpt: "the output should be a summary and then a note to the user that human-review is required"
+  - turn: 12
+    excerpt: "The remainder consists of embedded processing instructions rather than substantive document content"
+  - turn: 13
+    excerpt: "should we remove aigov:policy for better results?"
+  - turn: 14
+    excerpt: "in cli/policy.rs run i have to set output. currently it doenst work"
+  - turn: 15
+    excerpt: "removing POLICY_PREFIX has no effect"
+open_threads:
+  - "Choose whether policy enforcement will move into the trusted reader/orchestrator or remain an injection-only experiment."
+  - "If enforcing policy out of band, restore a machine-readable policy representation or another authenticated policy source."
 ai_suggestions_pending:
   - "Confirm whether the three policy preset semantics are the desired public contract."
   - "Confirm the policy lifecycle command design and validation semantics."
+  - "Keep AiPolicy production text separate from a red-team canary payload."
+  - "Begin with one exact-output canary before adding OOXML concealment variants."
+  - "Separate the hidden policy from summarization input and append the human-review notice deterministically."
+  - "If testing prompt obedience only, rewrite the prompt to preserve the primary task and append one exact notice."
+  - "Move the exact human-review notice to the end of the injected prompt with no following policy text."
+  - "Retain policy identity structurally or strip the textual prefix before model ingestion."
