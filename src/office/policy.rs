@@ -54,13 +54,17 @@ impl AiPolicy {
 }
 
 pub trait AiPolicyDocument {
-    fn policy(&self) -> error::Result<Option<AiPolicy>>;
+    /// Returns whether this document contains an injected AI policy prompt.
+    fn has_policy(&self) -> error::Result<bool>;
 
+    /// Injects a hidden AI policy prompt.
     fn inject_policy(&mut self, policy: &AiPolicy) -> error::Result<()>;
 
-    // fn remove_policy(&mut self) -> error::Result<()>;
+    /// Replaces the injected AI policy prompt.
+    fn update_policy(&mut self, policy: &AiPolicy) -> error::Result<()>;
 
-    // fn verify_policy(&self) -> error::Result<PolicyStatus>;
+    /// Removes the injected AI policy prompt, returning whether one was found.
+    fn remove_policy(&mut self) -> error::Result<bool>;
 }
 
 #[cfg(test)]

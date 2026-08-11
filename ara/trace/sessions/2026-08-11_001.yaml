@@ -1,0 +1,85 @@
+session:
+  id: "2026-08-11_001"
+  date: "2026-08-11"
+  started: "2026-08-11T08:02"
+  last_turn: "2026-08-11T08:02"
+  turn_count: 1
+  summary: "Fixed DOCX policy round-trip serialization and verified focused tests."
+
+events_logged:
+  - turn: 1
+    type: experiment
+    id: N01
+    routing: direct
+    provenance: ai-executed
+    summary: "Focused DOCX policy round-trip test passed after format alignment."
+  - turn: 2
+    type: decision
+    id: N02
+    routing: direct
+    provenance: user
+    summary: "DOCX injection should store only the hidden prompt, not serialized policy data."
+  - turn: 3
+    type: decision
+    id: N03
+    routing: direct
+    provenance: user
+    summary: "Use a prefix marker and add prompt lifecycle operations."
+  - turn: 3
+    type: experiment
+    id: N04
+    routing: direct
+    provenance: ai-executed
+    summary: "Policy lifecycle, library tests, doctests, and cargo check passed."
+  - turn: 4
+    type: observation
+    id: O01
+    routing: staged
+    provenance: ai-suggested
+    summary: "Move XML reader/writer ownership behind the DOCX policy codec boundary."
+  - turn: 5
+    type: decision
+    id: N05
+    routing: direct
+    provenance: user
+    summary: "Approved moving XML reader/writer construction into the policy codec."
+  - turn: 5
+    type: observation
+    id: O01
+    routing: crystallized
+    provenance: user-revised
+    summary: "Crystallized DOCX policy codec ownership as architecture A01."
+  - turn: 5
+    type: experiment
+    id: N06
+    routing: direct
+    provenance: ai-executed
+    summary: "Policy codec boundary refactor passed library tests, doctests, and cargo check."
+
+ai_actions:
+  - turn: 1
+    action: "Added hidden serialized policy payload before the AI prompt and ran focused tests."
+    provenance: ai-executed
+    files_changed: ["src/formats/docx/policy.rs"]
+  - turn: 2
+    action: "Removed serialized policy output and changed the focused test to assert prompt-only injection."
+    provenance: ai-executed
+    files_changed: ["src/formats/docx/policy.rs"]
+  - turn: 3
+    action: "Added marker detection and atomic update/removal APIs for hidden DOCX policy prompts."
+    provenance: ai-executed
+    files_changed: ["src/office/policy.rs", "src/formats/docx.rs", "src/formats/docx/policy.rs"]
+  - turn: 5
+    action: "Moved quick_xml Reader and Writer construction into the DOCX policy codec functions."
+    provenance: ai-executed
+    files_changed: ["src/formats/docx.rs", "src/formats/docx/policy.rs"]
+
+claims_touched: []
+logic_revisions: []
+key_context:
+  - turn: 1
+    excerpt: "check docx/policy.rs and ensure the test passes"
+  - turn: 3
+    excerpt: "implement functions for delete and update the policy"
+open_threads: []
+ai_suggestions_pending: []

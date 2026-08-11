@@ -4,62 +4,135 @@ use quick_xml::events::{BytesEnd, BytesStart, Event};
 use quick_xml::{Reader, Writer};
 
 const WORD_BODY: &[u8] = b"w:body";
+const WORD_PARAGRAPH: &[u8] = b"w:p";
 const WORD_SECTION_PROPERTIES: &[u8] = b"w:sectPr";
+const WORD_TEXT: &[u8] = b"w:t";
 const POLICY_PREFIX: &str = "aigov:policy:";
 
-pub(super) fn read_policy_from_document_xml(
-    reader: &mut Reader<&[u8]>,
-) -> error::Result<Option<AiPolicy>> {
+pub(super) fn has_policy_marker(xml: &[u8]) -> error::Result<bool> {
+    let mut reader = Reader::from_reader(xml);
     let mut buffer = Vec::new();
-    let mut text = None;
+    let mut paragraph = None;
 
     loop {
-        match reader.read_event_into(&mut buffer)?.into_owned() {
-            Event::Start(start) if start.name().as_ref() == b"w:t" => {
-                text = Some(String::new());
+        let event = reader.read_event_into(&mut buffer)?.into_owned();
+
+        match event {
+            Event::Eof => break,
+            Event::Start(start) if start.name().as_ref() == WORD_PARAGRAPH => {
+                paragraph = Some(vec![Event::Start(start)]);
             }
-            Event::Text(value) if text.is_some() => {
+            Event::End(end) if paragraph.is_some() && end.name().as_ref() == WORD_PARAGRAPH => {
+                paragraph
+                    .as_mut()
+                    .expect("paragraph exists")
+                    .push(Event::End(end));
+                if paragraph_contains_policy(&paragraph.take().expect("paragraph exists"))? {
+                    return Ok(true);
+                }
+            }
+            event => {
+                if let Some(events) = &mut paragraph {
+                    events.push(event);
+                }
+            }
+        }
+
+        buffer.clear();
+    }
+
+    if paragraph.is_some() {
+        return Err(error::OfficeError::InvalidAiPolicy(
+            "unterminated Word paragraph".into(),
+        ));
+    }
+
+    Ok(false)
+}
+
+pub(super) fn rewrite_hidden_policy(
+    xml: &[u8],
+    replacement: Option<&AiPolicy>,
+) -> error::Result<(bool, Vec<u8>)> {
+    let mut reader = Reader::from_reader(xml);
+    let mut writer = Writer::new(Vec::new());
+    let mut buffer = Vec::new();
+    let mut paragraph = None;
+    let mut rewritten = false;
+
+    loop {
+        let event = reader.read_event_into(&mut buffer)?.into_owned();
+
+        match event {
+            Event::Eof => break,
+            Event::Start(start) if start.name().as_ref() == WORD_PARAGRAPH => {
+                paragraph = Some(vec![Event::Start(start)]);
+            }
+            Event::End(end) if paragraph.is_some() && end.name().as_ref() == WORD_PARAGRAPH => {
+                paragraph
+                    .as_mut()
+                    .expect("paragraph exists")
+                    .push(Event::End(end));
+                let paragraph = paragraph.take().expect("paragraph exists");
+
+                if paragraph_contains_policy(&paragraph)? {
+                    rewritten = true;
+                    if let Some(policy) = replacement {
+                        write_hidden_policy_prompt(&mut writer, policy)?;
+                    }
+                } else {
+                    for event in paragraph {
+                        writer.write_event(event)?;
+                    }
+                }
+            }
+            event => {
+                if let Some(events) = &mut paragraph {
+                    events.push(event);
+                } else {
+                    writer.write_event(event)?;
+                }
+            }
+        }
+
+        buffer.clear();
+    }
+
+    if paragraph.is_some() {
+        return Err(error::OfficeError::InvalidAiPolicy(
+            "unterminated Word paragraph".into(),
+        ));
+    }
+
+    Ok((rewritten, writer.into_inner()))
+}
+
+fn paragraph_contains_policy(events: &[Event<'_>]) -> error::Result<bool> {
+    let mut in_text = false;
+    let mut text = String::new();
+
+    for event in events {
+        match event {
+            Event::Start(start) if start.name().as_ref() == WORD_TEXT => in_text = true,
+            Event::End(end) if end.name().as_ref() == WORD_TEXT => in_text = false,
+            Event::Text(value) if in_text => {
                 let value = value
                     .xml10_content()
                     .map_err(|error| error::OfficeError::InvalidAiPolicy(error.to_string()))?;
                 let value = quick_xml::escape::unescape(&value)
                     .map_err(|error| error::OfficeError::InvalidAiPolicy(error.to_string()))?;
-
-                text.as_mut().expect("text exists").push_str(&value);
+                text.push_str(&value);
             }
-            Event::GeneralRef(reference) if text.is_some() => {
-                let reference = reference
-                    .xml10_content()
-                    .map_err(|error| error::OfficeError::InvalidAiPolicy(error.to_string()))?;
-                let reference = format!("&{reference};");
-                let reference = quick_xml::escape::unescape(&reference)
-                    .map_err(|error| error::OfficeError::InvalidAiPolicy(error.to_string()))?;
-
-                text.as_mut().expect("text exists").push_str(&reference);
-            }
-            Event::End(end) if end.name().as_ref() == b"w:t" => {
-                if let Some(payload) = text
-                    .take()
-                    .and_then(|text| text.strip_prefix(POLICY_PREFIX).map(str::to_owned))
-                {
-                    return serde_json::from_str(&payload)
-                        .map(Some)
-                        .map_err(|error| error::OfficeError::InvalidAiPolicy(error.to_string()));
-                }
-            }
-            Event::Eof => return Ok(None),
             _ => {}
         }
-
-        buffer.clear();
     }
+
+    Ok(text.starts_with(POLICY_PREFIX))
 }
 
-pub(super) fn write_hidden_policy_paragraph(
-    policy: &AiPolicy,
-    reader: &mut Reader<&[u8]>,
-    writer: &mut Writer<Vec<u8>>,
-) -> error::Result<bool> {
+pub(super) fn write_hidden_policy(xml: &[u8], policy: &AiPolicy) -> error::Result<Vec<u8>> {
+    let mut reader = Reader::from_reader(xml);
+    let mut writer = Writer::new(Vec::new());
     let mut buffer = Vec::new();
     let mut body_depth: Option<usize> = None;
     let mut injected = false;
@@ -74,7 +147,7 @@ pub(super) fn write_hidden_policy_paragraph(
                     body_depth == Some(1) && start.name().as_ref() == WORD_SECTION_PROPERTIES;
 
                 if is_body_section_properties && !injected {
-                    write_hidden_policy_prompt(writer, policy)?;
+                    write_hidden_policy_prompt(&mut writer, policy)?;
                     injected = true;
                 }
 
@@ -91,7 +164,7 @@ pub(super) fn write_hidden_policy_paragraph(
                     && empty.name().as_ref() == WORD_SECTION_PROPERTIES
                     && !injected
                 {
-                    write_hidden_policy_prompt(writer, policy)?;
+                    write_hidden_policy_prompt(&mut writer, policy)?;
                     injected = true;
                 }
 
@@ -101,7 +174,7 @@ pub(super) fn write_hidden_policy_paragraph(
                 let is_body = end.name().as_ref() == WORD_BODY;
 
                 if is_body && !injected {
-                    write_hidden_policy_prompt(writer, policy)?;
+                    write_hidden_policy_prompt(&mut writer, policy)?;
                     injected = true;
                 }
 
@@ -119,7 +192,13 @@ pub(super) fn write_hidden_policy_paragraph(
 
         buffer.clear();
     }
-    Ok(injected)
+    if !injected {
+        return Err(error::OfficeError::InvalidDocument(
+            "Word document has no body element".into(),
+        ));
+    }
+
+    Ok(writer.into_inner())
 }
 
 fn write_hidden_policy_prompt(
@@ -133,9 +212,53 @@ fn write_hidden_policy_prompt(
     writer.write_event(Event::End(BytesEnd::new("w:rPr")))?;
 
     let prompt = policy.to_prompt();
-    ooxml::write_text_element(writer, "w:t", &prompt)?;
+    ooxml::write_text_element(writer, "w:t", &format!("{POLICY_PREFIX}{prompt}"))?;
 
     writer.write_event(Event::End(BytesEnd::new("w:r")))?;
     writer.write_event(Event::End(BytesEnd::new("w:p")))?;
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::formats::docx::{AiPolicyDocument, tests::minimal_docx};
+
+    #[test]
+    fn manages_hidden_policy_prompt() {
+        let mut document = minimal_docx();
+        let policy = AiPolicy {
+            id: "internal-use".into(),
+            human_review_required: true,
+            training_allowed: false,
+            attribution_required: true,
+            owner: Some("legal".into()),
+        };
+
+        document.inject_policy(&policy).unwrap();
+
+        let xml = std::str::from_utf8(document.document_xml().unwrap()).unwrap();
+        assert!(xml.contains("w:vanish"));
+        assert!(xml.contains("AI GOVERNANCE POLICY"));
+        assert!(xml.contains("Policy ID: internal-use"));
+        assert!(xml.contains(POLICY_PREFIX));
+        assert!(document.has_policy().unwrap());
+
+        let updated = AiPolicy {
+            id: "public-use".into(),
+            ..policy
+        };
+        document.update_policy(&updated).unwrap();
+
+        let xml = std::str::from_utf8(document.document_xml().unwrap()).unwrap();
+        assert!(!xml.contains("Policy ID: internal-use"));
+        assert!(xml.contains("Policy ID: public-use"));
+        assert!(document.remove_policy().unwrap());
+        assert!(!document.has_policy().unwrap());
+        let xml = std::str::from_utf8(document.document_xml().unwrap()).unwrap();
+        assert!(xml.contains("Hello world"));
+        assert!(!xml.contains(POLICY_PREFIX));
+        assert!(!document.remove_policy().unwrap());
+        assert!(document.update_policy(&updated).is_err());
+    }
 }

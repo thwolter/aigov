@@ -7,13 +7,11 @@ use crate::office::replacement::ReplaceOptions;
 use crate::{
     document::ValidationIssue,
     error,
-    error::Result,
     office::OfficeDocument,
     office::metadata::OfficeMetadata,
     ooxml,
     package::{OoxmlPackage, PartName},
 };
-use quick_xml::{Reader, Writer};
 use std::path::Path;
 
 const DOCUMENT_XML: &str = "word/document.xml";
@@ -61,12 +59,12 @@ impl DocxDocument {
     ///
     /// This is DOCX-specific. Prefer [`OfficeDocument::replace_text`] for
     /// ordinary visible-text edits.
-    pub fn document_xml(&self) -> Result<&[u8]> {
+    pub fn document_xml(&self) -> error::Result<&[u8]> {
         self.package.read_part(&DOCUMENT_XML.into())
     }
 
     /// Returns the raw `word/styles.xml` part when the document contains one.
-    pub fn styles_xml(&self) -> Result<Option<&[u8]>> {
+    pub fn styles_xml(&self) -> error::Result<Option<&[u8]>> {
         let part = PartName::new(STYLES_XML);
 
         if self.package.contains_part(&part) {
@@ -97,7 +95,7 @@ impl OfficeDocument for DocxDocument {
         search: &str,
         replacement: &str,
         options: ReplaceOptions,
-    ) -> Result<usize> {
+    ) -> error::Result<usize> {
         let part = PartName::new(DOCUMENT_XML);
         let (count, updated) = replacement::replace_document_text(
             self.package.read_part(&part)?,
@@ -117,15 +115,15 @@ impl OfficeDocument for DocxDocument {
         self.package.source_path()
     }
 
-    fn metadata(&self) -> Result<OfficeMetadata> {
+    fn metadata(&self) -> error::Result<OfficeMetadata> {
         ooxml::read_metadata(&self.package)
     }
 
-    fn set_metadata(&mut self, metadata: &OfficeMetadata) -> Result<()> {
+    fn set_metadata(&mut self, metadata: &OfficeMetadata) -> error::Result<()> {
         ooxml::write_metadata(&mut self.package, metadata)
     }
 
-    fn validate(&self) -> Result<Vec<ValidationIssue>> {
+    fn validate(&self) -> error::Result<Vec<ValidationIssue>> {
         let mut issues = Vec::new();
 
         let required_parts = [CONTENT_TYPES_XML, ROOT_RELS, DOCUMENT_XML];
@@ -144,34 +142,53 @@ impl OfficeDocument for DocxDocument {
         Ok(issues)
     }
 
-    fn save(&self, destination: &Path) -> Result<()> {
+    fn save(&self, destination: &Path) -> error::Result<()> {
         self.package.save(destination)
     }
 }
 
-fn invalid_document(message: impl Into<String>) -> error::OfficeError {
-    error::OfficeError::InvalidDocument(message.into())
-}
-
 impl AiPolicyDocument for DocxDocument {
-    fn policy(&self) -> error::Result<Option<AiPolicy>> {
-        let mut reader = Reader::from_reader(self.package.read_part(&DOCUMENT_XML.into())?);
-        policy::read_policy_from_document_xml(&mut reader)
+    fn has_policy(&self) -> error::Result<bool> {
+        policy::has_policy_marker(self.package.read_part(&DOCUMENT_XML.into())?)
     }
 
     fn inject_policy(&mut self, policy: &AiPolicy) -> error::Result<()> {
-        let part = PartName::new(DOCUMENT_XML);
-        let mut reader = Reader::from_reader(self.package.read_part(&part)?);
-        let mut writer = Writer::new(Vec::new());
-
-        let injected = policy::write_hidden_policy_paragraph(policy, &mut reader, &mut writer)?;
-
-        if !injected {
-            return Err(invalid_document("Word document has no body element"));
+        if self.has_policy()? {
+            return Err(error::OfficeError::InvalidAiPolicy(
+                "Word document already contains an AI policy".into(),
+            ));
         }
 
-        self.package.write_part(part, writer.into_inner());
+        let part = PartName::new(DOCUMENT_XML);
+        let updated = policy::write_hidden_policy(self.package.read_part(&part)?, policy)?;
+        self.package.write_part(part, updated);
         Ok(())
+    }
+
+    fn update_policy(&mut self, policy: &AiPolicy) -> error::Result<()> {
+        let part = PartName::new(DOCUMENT_XML);
+        let (updated, xml) =
+            policy::rewrite_hidden_policy(self.package.read_part(&part)?, Some(policy))?;
+
+        if !updated {
+            return Err(error::OfficeError::InvalidAiPolicy(
+                "Word document does not contain an AI policy".into(),
+            ));
+        }
+
+        self.package.write_part(part, xml);
+        Ok(())
+    }
+
+    fn remove_policy(&mut self) -> error::Result<bool> {
+        let part = PartName::new(DOCUMENT_XML);
+        let (removed, xml) = policy::rewrite_hidden_policy(self.package.read_part(&part)?, None)?;
+
+        if removed {
+            self.package.write_part(part, xml);
+        }
+
+        Ok(removed)
     }
 }
 
@@ -372,21 +389,5 @@ pub(crate) mod tests {
         assert!(custom.contains("Acme &amp; Co"));
         assert!(content_types.contains("/docProps/custom.xml"));
         assert!(relationships.contains("custom-properties"));
-    }
-
-    #[test]
-    fn injects_and_reads_ai_policy() {
-        let mut document = minimal_docx();
-        let policy = AiPolicy {
-            id: "internal-use".into(),
-            human_review_required: true,
-            training_allowed: false,
-            attribution_required: true,
-            owner: Some("legal".into()),
-        };
-
-        document.inject_policy(&policy).unwrap();
-
-        assert_eq!(document.policy().unwrap(), Some(policy));
     }
 }

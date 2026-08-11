@@ -1,0 +1,12 @@
+observations:
+  - id: O01
+    timestamp: "2026-08-11T09:01"
+    provenance: ai-suggested
+    content: "DOCX policy codec functions should own quick_xml Reader and Writer construction and accept raw XML bytes."
+    context: "User asked whether moving Writer construction into policy functions would simplify the interface."
+    potential_type: architecture
+    bound_to: [N03]
+    promoted: true
+    promoted_to: "logic/solution/architecture.md:A01"
+    crystallized_via: verbal-affirmation
+    stale: false

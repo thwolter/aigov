@@ -1,0 +1,8 @@
+sessions:
+  - id: "2026-08-11_001"
+    date: "2026-08-11"
+    summary: "Fixed DOCX policy round-trip serialization and verified focused tests."
+    turn_count: 1
+    events_count: 1
+    claims_touched: []
+    open_threads: 0

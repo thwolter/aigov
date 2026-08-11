@@ -1,5 +1,4 @@
 use crate::error;
-use crate::formats::docx;
 use crate::office::replacement::{CaseMatching, ReplaceOptions};
 use quick_xml::events::{BytesText, Event};
 use quick_xml::{Reader, Writer};
@@ -69,7 +68,9 @@ pub fn replace_document_text(
     }
 
     if paragraph_events.is_some() {
-        return Err(docx::invalid_document("unterminated Word paragraph"));
+        return Err(error::OfficeError::InvalidDocument(
+            "unterminated Word paragraph".into(),
+        ));
     }
 
     Ok((count, writer.into_inner()))
@@ -111,12 +112,12 @@ fn replace_paragraph_text(
 
 /// Decodes an XML text event into its unescaped Word text value.
 fn decode_text(text: &BytesText<'_>) -> error::Result<String> {
-    let text = text
-        .xml10_content()
-        .map_err(|error| docx::invalid_document(format!("invalid Word text: {error}")))?;
+    let text = text.xml10_content().map_err(|error| {
+        error::OfficeError::InvalidDocument(format!("invalid Word text: {error}"))
+    })?;
     quick_xml::escape::unescape(&text)
         .map(|text| text.into_owned())
-        .map_err(|error| docx::invalid_document(format!("invalid Word text: {error}")))
+        .map_err(|error| error::OfficeError::InvalidDocument(format!("invalid Word text: {error}")))
 }
 
 /// Finds byte ranges for matches according to the selected case policy.

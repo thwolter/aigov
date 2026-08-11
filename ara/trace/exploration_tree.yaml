@@ -1,0 +1,60 @@
+tree:
+  - id: N01
+    type: experiment
+    title: "DOCX policy injection round trip"
+    provenance: ai-executed
+    timestamp: "2026-08-11T08:02"
+    result: >
+      The focused test initially returned None because the writer emitted only the
+      AI prompt while the reader expected an aigov:policy JSON payload. Writing the
+      serialized payload before the prompt made the round-trip test pass.
+    evidence: ["cargo test injects_and_reads_ai_policy"]
+    status: resolved
+  - id: N02
+    type: decision
+    title: "DOCX injection stores prompt only"
+    provenance: user
+    timestamp: "2026-08-11T08:02"
+    choice: "Remove serialized policy metadata and test hidden prompt injection only."
+    alternatives: ["Embed an aigov:policy JSON payload"]
+    evidence: [N01]
+    status: resolved
+  - id: N03
+    type: decision
+    title: "Mark prompt-only policy for lifecycle operations"
+    provenance: user
+    timestamp: "2026-08-11T08:18"
+    choice: >
+      Prefix the hidden prompt with aigov:policy and provide detection, update,
+      and removal operations without serializing AiPolicy fields.
+    alternatives: ["Unmarked prompt", "Serialized policy payload"]
+    evidence: [N02]
+    status: resolved
+  - id: N04
+    type: experiment
+    title: "DOCX policy lifecycle verification"
+    provenance: ai-executed
+    timestamp: "2026-08-11T08:18"
+    result: >
+      Injection, marker detection, atomic replacement, removal, library tests,
+      doctests, and cargo check passed. The full binary suite still has the
+      unrelated LibreOffice PDF SIGABRT failure.
+    evidence: ["cargo test --lib", "cargo test --doc", "cargo check"]
+    status: resolved
+  - id: N05
+    type: decision
+    title: "Move XML construction into policy codec"
+    provenance: user
+    timestamp: "2026-08-11T09:04"
+    choice: "Have policy functions accept raw XML and own Reader and Writer construction."
+    alternatives: ["Construct Reader and Writer in DocxDocument"]
+    evidence: [O01]
+    status: resolved
+  - id: N06
+    type: experiment
+    title: "Policy codec boundary verification"
+    provenance: ai-executed
+    timestamp: "2026-08-11T09:04"
+    result: "All 30 library tests, 10 doctests, cargo check, and diff whitespace checks passed."
+    evidence: ["cargo test --lib", "cargo test --doc", "cargo check", "git diff --check"]
+    status: resolved
