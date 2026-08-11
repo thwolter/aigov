@@ -1,6 +1,9 @@
+use aigov::error;
+use aigov::formats::Document;
+use aigov::office::OfficeDocument;
 use aigov::office::replacement::{CaseMatching, ReplaceOptions};
 use clap::{ArgGroup, Args};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 #[derive(Args)]
 #[command(
@@ -42,4 +45,21 @@ impl ReplaceArgs {
             },
         }
     }
+}
+
+pub fn replace(filepath: &Path, args: &ReplaceArgs) -> error::Result<()> {
+    let mut document = Document::from_file(filepath)?;
+    let output = args.output.as_deref().unwrap_or(filepath);
+    let options = args.options();
+
+    let count = document.replace_text(&args.search, &args.replace, options)?;
+    if count == 0 {
+        super::print_warning(format!("Search term '{}' not found", args.search));
+        return Ok(());
+    }
+
+    document.save(output)?;
+    super::print_success(format!("Replaced {count} occurrences"));
+
+    Ok(())
 }
