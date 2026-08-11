@@ -2,7 +2,7 @@ mod cli;
 
 fn main() {
     if let Err(error) = cli::run() {
-        eprintln!("error: {error}");
+        cli::print_error(error);
         std::process::exit(1);
     }
 }

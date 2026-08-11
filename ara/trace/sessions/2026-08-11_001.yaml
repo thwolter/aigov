@@ -2,9 +2,9 @@ session:
   id: "2026-08-11_001"
   date: "2026-08-11"
   started: "2026-08-11T08:02"
-  last_turn: "2026-08-11T08:02"
-  turn_count: 1
-  summary: "Fixed DOCX policy round-trip serialization and verified focused tests."
+  last_turn: "2026-08-11T10:17"
+  turn_count: 8
+  summary: "Implemented CLI policy presets; designing lifecycle commands and validation."
 
 events_logged:
   - turn: 1
@@ -55,6 +55,36 @@ events_logged:
     routing: direct
     provenance: ai-executed
     summary: "Policy codec boundary refactor passed library tests, doctests, and cargo check."
+  - turn: 6
+    type: question
+    id: N07
+    routing: direct
+    provenance: user
+    summary: "How should ValueEnum select prespecified AiPolicy values?"
+  - turn: 7
+    type: decision
+    id: N08
+    routing: direct
+    provenance: user
+    summary: "Rename and expand the CLI policy preset enum."
+  - turn: 7
+    type: observation
+    id: O02
+    routing: staged
+    provenance: ai-suggested
+    summary: "Map descriptive ValueEnum presets to fresh owned policies and retain legacy aliases."
+  - turn: 8
+    type: question
+    id: N09
+    routing: direct
+    provenance: user
+    summary: "How should policy lifecycle commands and validation work?"
+  - turn: 8
+    type: observation
+    id: O03
+    routing: staged
+    provenance: ai-suggested
+    summary: "Use nested lifecycle subcommands and canonical-prompt validation."
 
 ai_actions:
   - turn: 1
@@ -73,6 +103,10 @@ ai_actions:
     action: "Moved quick_xml Reader and Writer construction into the DOCX policy codec functions."
     provenance: ai-executed
     files_changed: ["src/formats/docx.rs", "src/formats/docx/policy.rs"]
+  - turn: 7
+    action: "Renamed the CLI preset enum, added three preset policies, wired selection into injection, and ran the focused test."
+    provenance: ai-executed
+    files_changed: ["src/cli/policy.rs"]
 
 claims_touched: []
 logic_revisions: []
@@ -82,4 +116,6 @@ key_context:
   - turn: 3
     excerpt: "implement functions for delete and update the policy"
 open_threads: []
-ai_suggestions_pending: []
+ai_suggestions_pending:
+  - "Confirm whether the three policy preset semantics are the desired public contract."
+  - "Confirm the policy lifecycle command design and validation semantics."

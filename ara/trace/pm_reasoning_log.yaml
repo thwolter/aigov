@@ -16,3 +16,12 @@ entries:
     notes:
       - "Crystallized O01 to A01 via verbal affirmation and artifact commitment."
       - "Preserved existing private helper names after a concurrent docx.rs autosave; the agreed ownership boundary is implemented."
+  - turn: "2026-08-11_001#6"
+    notes:
+      - "Recorded the user's request for CLI preset representation as an open question; no claim was staged because the answer is a local implementation pattern."
+  - turn: "2026-08-11_001#7"
+    notes:
+      - "Recorded the rename-and-expansion direction as N08 and staged O02 as a heuristic; it remains unconfirmed because the user did not select the exact preset semantics."
+  - turn: "2026-08-11_001#8"
+    notes:
+      - "Staged O03 as architecture because the user requested CLI design discussion without choosing an interface or authorizing implementation."

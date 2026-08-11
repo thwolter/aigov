@@ -58,3 +58,26 @@ tree:
     result: "All 30 library tests, 10 doctests, cargo check, and diff whitespace checks passed."
     evidence: ["cargo test --lib", "cargo test --doc", "cargo check", "git diff --check"]
     status: resolved
+  - id: N07
+    type: question
+    title: "CLI policy preset representation"
+    provenance: user
+    timestamp: "2026-08-11T09:41"
+    description: "How should clap ValueEnum variants select prespecified AiPolicy values?"
+    status: open
+  - id: N08
+    type: decision
+    title: "Rename and expand CLI policy presets"
+    provenance: user
+    timestamp: "2026-08-11T09:47"
+    choice: "Rename the policy selection enum and provide additional predefined policies."
+    alternatives: ["Keep the weak/strong enum unchanged"]
+    evidence: [N07]
+    status: resolved
+  - id: N09
+    type: question
+    title: "Policy lifecycle CLI design"
+    provenance: user
+    timestamp: "2026-08-11T10:17"
+    description: "How should policy injection, update, removal, and validation be exposed in the CLI?"
+    status: open

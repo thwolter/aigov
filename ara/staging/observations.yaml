@@ -10,3 +10,25 @@ observations:
     promoted_to: "logic/solution/architecture.md:A01"
     crystallized_via: verbal-affirmation
     stale: false
+  - id: O02
+    timestamp: "2026-08-11T09:47"
+    provenance: ai-suggested
+    content: "A PolicyPreset ValueEnum with Permissive, Standard, and Restricted variants can construct fresh owned AiPolicy values while retaining weak and strong as CLI aliases."
+    context: "User requested an expanded and renamed CLI policy enum."
+    potential_type: heuristic
+    bound_to: [N08]
+    promoted: false
+    promoted_to: null
+    crystallized_via: null
+    stale: false
+  - id: O03
+    timestamp: "2026-08-11T10:17"
+    provenance: ai-suggested
+    content: "Policy lifecycle actions should be nested CLI subcommands; validation should compare the hidden prompt against canonical preset prompts, yielding Valid, Missing, Incomplete, or Modified."
+    context: "User requested a better policy CLI and described the validation status enum."
+    potential_type: architecture
+    bound_to: [N09]
+    promoted: false
+    promoted_to: null
+    crystallized_via: null
+    stale: false

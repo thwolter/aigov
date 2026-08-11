@@ -190,6 +190,11 @@ impl AiPolicyDocument for DocxDocument {
 
         Ok(removed)
     }
+
+    fn validate_policy(&self) -> error::Result<()> {
+        println!("Validating AI policy to be implemented");
+        Ok(())
+    }
 }
 
 #[cfg(test)]

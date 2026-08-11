@@ -65,6 +65,9 @@ pub trait AiPolicyDocument {
 
     /// Removes the injected AI policy prompt, returning whether one was found.
     fn remove_policy(&mut self) -> error::Result<bool>;
+
+    /// Validates the injected AI policy.
+    fn validate_policy(&self) -> error::Result<()>;
 }
 
 #[cfg(test)]
