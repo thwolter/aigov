@@ -98,3 +98,25 @@ observations:
     promoted_to: null
     crystallized_via: null
     stale: false
+  - id: O10
+    timestamp: "2026-08-11T19:28"
+    provenance: ai-suggested
+    content: "The aigov CLI should be a deterministic document-processing layer around LLM workflows: extract structured inputs before model use and validate, sanitize, or verify artifacts after model use."
+    context: "User requested a cross-format command roadmap whose features must outperform asking an LLM directly on speed, safety, or cleanliness."
+    potential_type: architecture
+    bound_to: [N20]
+    promoted: false
+    promoted_to: null
+    crystallized_via: null
+    stale: false
+  - id: O11
+    timestamp: "2026-08-11T19:28"
+    provenance: ai-suggested
+    content: "New CLI commands should be prioritized when they provide deterministic output, exact byte or structure preservation, reliable exit codes, offline privacy, or repeatable batch execution."
+    context: "Potential commands were ranked against LLM-native summarization, rewriting, translation, and classification."
+    potential_type: heuristic
+    bound_to: [N20]
+    promoted: false
+    promoted_to: null
+    crystallized_via: null
+    stale: false

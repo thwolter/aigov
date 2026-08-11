@@ -11,7 +11,7 @@ pub struct UnzipArgs {
 }
 
 /// Unzip a office and store its contents in a subfolder
-pub fn unzip_document(filepath: &Path, args: &UnzipArgs) -> error::Result<()> {
+pub fn run(filepath: &Path, args: &UnzipArgs) -> error::Result<()> {
     let file = File::open(filepath)?;
     let mut archive = ZipArchive::new(file)?;
     let output_directory = args
@@ -30,7 +30,7 @@ pub fn unzip_document(filepath: &Path, args: &UnzipArgs) -> error::Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::cli::unzip::unzip_document;
+    use crate::cli::unzip::run;
     use std::{
         fs,
         io::{Cursor, Write},
@@ -67,7 +67,7 @@ mod tests {
         archive.finish().unwrap();
         fs::write(&source, bytes.into_inner()).unwrap();
 
-        unzip_document(&source, &UnzipArgs { output: None }).unwrap();
+        run(&source, &UnzipArgs { output: None }).unwrap();
 
         assert_eq!(
             fs::read(output.join("word/document.xml")).unwrap(),

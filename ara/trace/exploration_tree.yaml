@@ -178,3 +178,12 @@ tree:
     failure_mode: "Removing the prefix did not change model behavior."
     lesson: "Restore the lifecycle marker and focus subsequent tests on instruction semantics and the reader/model trust boundary."
     status: resolved
+  - id: N20
+    type: question
+    title: "Format-neutral CLI command roadmap"
+    provenance: user
+    timestamp: "2026-08-11T19:28"
+    description: >
+      Which additional commands should aigov expose across Office formats when each
+      command must be faster, safer, or cleaner than performing the task through an LLM?
+    status: open

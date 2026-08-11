@@ -2,9 +2,9 @@ session:
   id: "2026-08-11_001"
   date: "2026-08-11"
   started: "2026-08-11T08:02"
-  last_turn: "2026-08-11T17:53"
-  turn_count: 15
-  summary: "Ruled out the textual policy prefix as the cause of instruction rejection."
+  last_turn: "2026-08-11T19:28"
+  turn_count: 16
+  summary: "Opened a format-neutral CLI roadmap centered on deterministic safeguards around LLM workflows."
 
 events_logged:
   - turn: 1
@@ -181,6 +181,24 @@ events_logged:
     routing: direct
     provenance: user
     summary: "Rejected the prefix-as-primary-cue hypothesis."
+  - turn: 16
+    type: question
+    id: N20
+    routing: direct
+    provenance: user
+    summary: "Which cross-format commands earn a place by outperforming LLM execution?"
+  - turn: 16
+    type: observation
+    id: O10
+    routing: staged
+    provenance: ai-suggested
+    summary: "Position the CLI as deterministic preparation and enforcement around LLM workflows."
+  - turn: 16
+    type: observation
+    id: O11
+    routing: staged
+    provenance: ai-suggested
+    summary: "Prioritize commands with determinism, preservation, privacy, exit codes, or batch repeatability."
 
 ai_actions:
   - turn: 1
@@ -233,9 +251,12 @@ key_context:
     excerpt: "in cli/policy.rs run i have to set output. currently it doenst work"
   - turn: 15
     excerpt: "removing POLICY_PREFIX has no effect"
+  - turn: 16
+    excerpt: "the cli is not only for docx ... faster, safer, cleaner to do with an cli"
 open_threads:
   - "Choose whether policy enforcement will move into the trusted reader/orchestrator or remain an injection-only experiment."
   - "If enforcing policy out of band, restore a machine-readable policy representation or another authenticated policy source."
+  - "Choose and sequence the first cross-format command tranche."
 ai_suggestions_pending:
   - "Confirm whether the three policy preset semantics are the desired public contract."
   - "Confirm the policy lifecycle command design and validation semantics."
@@ -245,3 +266,5 @@ ai_suggestions_pending:
   - "If testing prompt obedience only, rewrite the prompt to preserve the primary task and append one exact notice."
   - "Move the exact human-review notice to the end of the injected prompt with no following policy text."
   - "Retain policy identity structurally or strip the textual prefix before model ingestion."
+  - "Adopt inspect, validate, sanitize, extract, diff, redact, and verify as a capability-driven roadmap rather than format-named commands."
+  - "Consider changing the early 0.1 CLI from file-first to command-first syntax before multi-input and batch commands make the interface harder to evolve."

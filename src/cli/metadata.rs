@@ -1,7 +1,8 @@
+use crate::cli::Cli;
 use aigov::office::metadata::MetadataPatch;
 use aigov::package::OoxmlPackage;
 use aigov::{error, ooxml};
-use clap::{Args, Subcommand};
+use clap::{Args, CommandFactory, Subcommand};
 use std::collections::BTreeMap;
 use std::fs::read_to_string;
 use std::io;
@@ -9,24 +10,21 @@ use std::path::{Path, PathBuf};
 
 #[derive(Args)]
 pub struct MetadataArgs {
-    #[arg(short, long)]
-    pub pretty: bool,
-
     #[command(subcommand)]
-    pub command: Option<MetadataCommand>,
+    command: Option<MetadataCommand>,
 }
 
 #[derive(Subcommand)]
-pub enum MetadataCommand {
-    #[command(override_usage = "aigov <FILEPATH> metadata set [OPTIONS]")]
-    Set(SetArgs),
+enum MetadataCommand {
+    /// Update editable document metadata; application-generated statistics remain read-only
+    Set(Box<SetArgs>),
+
+    /// Show document metadata
+    Show(Box<ShowArgs>),
 }
 
 #[derive(Args)]
-#[command(
-    about = "Update editable document metadata; application-generated statistics remain read-only"
-)]
-pub struct SetArgs {
+struct SetArgs {
     #[arg(long, short)]
     pub title: Option<String>,
 
@@ -68,6 +66,12 @@ pub struct SetArgs {
 
     #[arg(long, short)]
     pub profile: Option<PathBuf>,
+}
+
+#[derive(Args)]
+struct ShowArgs {
+    #[arg(short, long)]
+    pub pretty: bool,
 }
 
 fn parse_custom_property(value: &str) -> std::result::Result<(String, String), String> {
@@ -126,6 +130,109 @@ impl From<&SetArgs> for MetadataPatch {
     }
 }
 
+pub fn run(filepath: &Path, args: &MetadataArgs) -> error::Result<()> {
+    let Some(command) = args.command.as_ref() else {
+        Cli::command()
+            .find_subcommand_mut("metadata")
+            .expect("metadata subcommand is defined")
+            .print_help()?;
+        return Ok(());
+    };
+    match command {
+        MetadataCommand::Set(args) => {
+            if args.is_empty() {
+                Cli::command()
+                    .find_subcommand_mut("metadata")
+                    .expect("metadata subcommand is defined")
+                    .find_subcommand_mut("set")
+                    .expect("set subcommand is defined")
+                    .print_help()?;
+                return Ok(());
+            }
+            set_metadata(filepath, args)
+        }
+        MetadataCommand::Show(args) => show_metadata(filepath, args),
+    }
+}
+
+fn show_metadata(filepath: &Path, args: &ShowArgs) -> error::Result<()> {
+    let package = OoxmlPackage::from_file(filepath)?;
+    let metadata = ooxml::read_metadata(&package)?;
+    let metadata = serde_json::json!({
+        "core": {
+            "title": &metadata.core.title,
+            "subject": &metadata.core.subject,
+            "creator": &metadata.core.creator,
+            "description": &metadata.core.description,
+            "keywords": &metadata.core.keywords,
+            "category": &metadata.core.category,
+            "content_status": &metadata.core.content_status,
+            "content_type": &metadata.core.content_type,
+            "language": &metadata.core.language,
+            "last_modified_by": &metadata.core.last_modified_by,
+            "created": &metadata.core.created,
+            "modified": &metadata.core.modified,
+            "last_printed": &metadata.core.last_printed,
+            "revision": &metadata.core.revision,
+            "identifier": &metadata.core.identifier,
+            "version": &metadata.core.version,
+        },
+        "extended": {
+            "application": &metadata.extended.application,
+            "app_version": &metadata.extended.app_version,
+            "template": &metadata.extended.template,
+            "company": &metadata.extended.company,
+            "total_time": &metadata.extended.total_time,
+            "pages": &metadata.extended.pages,
+            "words": &metadata.extended.words,
+            "characters": &metadata.extended.characters,
+            "characters_with_spaces": &metadata.extended.characters_with_spaces,
+            "lines": &metadata.extended.lines,
+            "paragraphs": &metadata.extended.paragraphs,
+            "doc_security": &metadata.extended.doc_security,
+            "scale_crop": &metadata.extended.scale_crop,
+            "links_up_to_date": &metadata.extended.links_up_to_date,
+            "shared_doc": &metadata.extended.shared_doc,
+            "hyperlinks_changed": &metadata.extended.hyperlinks_changed,
+            "heading_pairs": &metadata.extended.heading_pairs,
+            "titles_of_parts": &metadata.extended.titles_of_parts,
+            "dig_sig": &metadata.extended.dig_sig,
+        },
+        "custom": &metadata.custom,
+    });
+
+    let stdout = io::stdout();
+    let mut out = stdout.lock();
+
+    if args.pretty {
+        serde_json::to_writer_pretty(&mut out, &metadata)?;
+    } else {
+        serde_json::to_writer(&mut out, &metadata)?;
+    }
+    println!();
+
+    Ok(())
+}
+
+fn set_metadata(filepath: &Path, args: &SetArgs) -> error::Result<()> {
+    let mut package = OoxmlPackage::from_file(filepath)?;
+    let mut metadata = ooxml::read_metadata(&package)?;
+
+    if let Some(profile) = &args.profile {
+        let json = read_to_string(profile)?;
+        MetadataPatch::from_json(&json)?.apply_to(&mut metadata)?;
+    }
+    MetadataPatch::from(args).apply_to(&mut metadata)?;
+
+    ooxml::write_metadata(&mut package, &metadata)?;
+    package.save(Path::new(filepath))?;
+
+    let filepath = filepath.to_string_lossy();
+    super::print_success(format!("Metadata updated: {filepath}"));
+
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::{MetadataPatch, SetArgs};
@@ -176,82 +283,4 @@ mod tests {
 
         assert_eq!(patch.custom.unwrap()["Client"], "Acme");
     }
-}
-
-pub fn show_metadata(filepath: &Path, metadata_args: &MetadataArgs) -> error::Result<()> {
-    let package = OoxmlPackage::from_file(filepath)?;
-    let metadata = ooxml::read_metadata(&package)?;
-    let metadata = serde_json::json!({
-        "core": {
-            "title": &metadata.core.title,
-            "subject": &metadata.core.subject,
-            "creator": &metadata.core.creator,
-            "description": &metadata.core.description,
-            "keywords": &metadata.core.keywords,
-            "category": &metadata.core.category,
-            "content_status": &metadata.core.content_status,
-            "content_type": &metadata.core.content_type,
-            "language": &metadata.core.language,
-            "last_modified_by": &metadata.core.last_modified_by,
-            "created": &metadata.core.created,
-            "modified": &metadata.core.modified,
-            "last_printed": &metadata.core.last_printed,
-            "revision": &metadata.core.revision,
-            "identifier": &metadata.core.identifier,
-            "version": &metadata.core.version,
-        },
-        "extended": {
-            "application": &metadata.extended.application,
-            "app_version": &metadata.extended.app_version,
-            "template": &metadata.extended.template,
-            "company": &metadata.extended.company,
-            "total_time": &metadata.extended.total_time,
-            "pages": &metadata.extended.pages,
-            "words": &metadata.extended.words,
-            "characters": &metadata.extended.characters,
-            "characters_with_spaces": &metadata.extended.characters_with_spaces,
-            "lines": &metadata.extended.lines,
-            "paragraphs": &metadata.extended.paragraphs,
-            "doc_security": &metadata.extended.doc_security,
-            "scale_crop": &metadata.extended.scale_crop,
-            "links_up_to_date": &metadata.extended.links_up_to_date,
-            "shared_doc": &metadata.extended.shared_doc,
-            "hyperlinks_changed": &metadata.extended.hyperlinks_changed,
-            "heading_pairs": &metadata.extended.heading_pairs,
-            "titles_of_parts": &metadata.extended.titles_of_parts,
-            "dig_sig": &metadata.extended.dig_sig,
-        },
-        "custom": &metadata.custom,
-    });
-
-    let stdout = io::stdout();
-    let mut out = stdout.lock();
-
-    if metadata_args.pretty {
-        serde_json::to_writer_pretty(&mut out, &metadata)?;
-    } else {
-        serde_json::to_writer(&mut out, &metadata)?;
-    }
-    println!();
-
-    Ok(())
-}
-
-pub fn set_metadata(filepath: &Path, args: &SetArgs) -> error::Result<()> {
-    let mut package = OoxmlPackage::from_file(filepath)?;
-    let mut metadata = ooxml::read_metadata(&package)?;
-
-    if let Some(profile) = &args.profile {
-        let json = read_to_string(profile)?;
-        MetadataPatch::from_json(&json)?.apply_to(&mut metadata)?;
-    }
-    MetadataPatch::from(args).apply_to(&mut metadata)?;
-
-    ooxml::write_metadata(&mut package, &metadata)?;
-    package.save(Path::new(filepath))?;
-
-    let filepath = filepath.to_string_lossy();
-    super::print_success(format!("Metadata updated: {filepath}"));
-
-    Ok(())
 }

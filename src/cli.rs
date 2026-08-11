@@ -8,8 +8,6 @@ use std::io;
 use std::io::IsTerminal;
 use std::path::PathBuf;
 
-use crate::cli;
-use crate::cli::metadata::MetadataCommand;
 use aigov::error;
 use clap::{CommandFactory, Parser, Subcommand};
 
@@ -21,10 +19,10 @@ pub struct Cli {
         value_name = "FILEPATH",
         help = "Input document; supported file types depend on the selected command"
     )]
-    pub filepath: PathBuf,
+    filepath: PathBuf,
 
     #[command(subcommand)]
-    pub command: Option<Commands>,
+    command: Option<Commands>,
 }
 
 #[derive(Subcommand)]
@@ -49,46 +47,26 @@ pub enum Commands {
 }
 
 pub fn run() -> error::Result<()> {
-    let args = Cli::parse();
-    if !&args.filepath.exists() {
+    let cli_args = Cli::parse();
+
+    let filepath = cli_args.filepath;
+    if !filepath.exists() {
         print_error("Filepath does not exist");
         std::process::exit(1);
     };
 
-    let Some(command) = args.command.as_ref() else {
+    let Some(command) = cli_args.command.as_ref() else {
         Cli::command().print_help()?;
         std::process::exit(1);
     };
-    let result: error::Result<()> = match command {
-        Commands::Unzip(unzip_args) => cli::unzip::unzip_document(&args.filepath, unzip_args),
 
-        Commands::Metadata(metadata_args) => match &metadata_args.command {
-            None => cli::metadata::show_metadata(&args.filepath, metadata_args),
-            Some(MetadataCommand::Set(set_args)) if set_args.is_empty() => print_set_help(),
-            Some(MetadataCommand::Set(set_args)) => {
-                cli::metadata::set_metadata(&args.filepath, set_args)
-            }
-        },
-        Commands::Pdf(pdf_args) => pdf::convert_to_pdf(&args.filepath, pdf_args),
-
-        Commands::Replace(replace_args) => replace::replace(&args.filepath, replace_args),
-
-        Commands::Policy(policy_args) => policy::run(&args.filepath, policy_args),
-    };
-    result
-}
-
-fn print_set_help() -> error::Result<()> {
-    let mut command = Cli::command();
-    let metadata = command
-        .find_subcommand_mut("metadata")
-        .expect("metadata subcommand is defined");
-    let set = metadata
-        .find_subcommand_mut("set")
-        .expect("metadata set subcommand is defined");
-    set.print_help()?;
-    println!();
-    Ok(())
+    match command {
+        Commands::Unzip(args) => unzip::run(&filepath, args),
+        Commands::Metadata(args) => metadata::run(&filepath, args),
+        Commands::Pdf(args) => pdf::run(&filepath, args),
+        Commands::Replace(args) => replace::run(&filepath, args),
+        Commands::Policy(args) => policy::run(&filepath, args),
+    }
 }
 
 #[cfg(test)]

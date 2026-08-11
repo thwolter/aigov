@@ -11,7 +11,7 @@ pub struct PdfArgs {
     pub output: Option<PathBuf>,
 }
 
-pub fn convert_to_pdf(filepath: &Path, args: &PdfArgs) -> error::Result<()> {
+pub fn run(filepath: &Path, args: &PdfArgs) -> error::Result<()> {
     let output_dir = args.output.as_deref().unwrap_or(filepath.parent().unwrap());
     let status = Command::new("soffice")
         .args([
@@ -41,7 +41,7 @@ pub fn convert_to_pdf(filepath: &Path, args: &PdfArgs) -> error::Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::cli::pdf::convert_to_pdf;
+    use crate::cli::pdf::run;
     use std::fs;
     use tempfile::tempdir;
 
@@ -55,7 +55,7 @@ mod tests {
         let pdf_args = PdfArgs {
             output: Some(dir.path().join("test")),
         };
-        convert_to_pdf(&input, &pdf_args).unwrap();
+        run(&input, &pdf_args).unwrap();
         assert!(dir.path().join("test").exists());
 
         let bytes = fs::read(dir.path().join("test/minimal.pdf")).unwrap();
