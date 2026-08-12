@@ -1,8 +1,9 @@
+use crate::cli::FileCommand;
 use aigov::error;
 use aigov::error::OfficeError;
 use clap::Args;
 use std::io;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::process::Command;
 
 #[derive(Args)]
@@ -11,8 +12,12 @@ pub struct PdfArgs {
     pub output: Option<PathBuf>,
 }
 
-pub fn run(filepath: &Path, args: &PdfArgs) -> error::Result<()> {
-    let output_dir = args.output.as_deref().unwrap_or(filepath.parent().unwrap());
+pub fn run(command: &FileCommand<PdfArgs>) -> error::Result<()> {
+    let output_dir = command
+        .args
+        .output
+        .as_deref()
+        .unwrap_or(command.filepath.parent().unwrap());
     let status = Command::new("soffice")
         .args([
             "--headless",
@@ -20,7 +25,7 @@ pub fn run(filepath: &Path, args: &PdfArgs) -> error::Result<()> {
             "pdf",
             "--outdir",
             output_dir.to_str().unwrap(),
-            filepath.to_str().unwrap(),
+            command.filepath.to_str().unwrap(),
         ])
         .status()
         .map_err(|error| match error.kind() {
@@ -41,7 +46,6 @@ pub fn run(filepath: &Path, args: &PdfArgs) -> error::Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::cli::pdf::run;
     use std::fs;
     use tempfile::tempdir;
 
@@ -55,7 +59,11 @@ mod tests {
         let pdf_args = PdfArgs {
             output: Some(dir.path().join("test")),
         };
-        run(&input, &pdf_args).unwrap();
+        let command = FileCommand {
+            filepath: input.to_path_buf(),
+            args: pdf_args,
+        };
+        run(&command).unwrap();
         assert!(dir.path().join("test").exists());
 
         let bytes = fs::read(dir.path().join("test/minimal.pdf")).unwrap();

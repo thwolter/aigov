@@ -1,4 +1,4 @@
-use crate::cli::Cli;
+use crate::cli::{Cli, FileCommand};
 use aigov::office::metadata::MetadataPatch;
 use aigov::package::OoxmlPackage;
 use aigov::{error, ooxml};
@@ -11,7 +11,7 @@ use std::path::{Path, PathBuf};
 #[derive(Args)]
 pub struct MetadataArgs {
     #[command(subcommand)]
-    command: Option<MetadataCommand>,
+    command: MetadataCommand,
 }
 
 #[derive(Subcommand)]
@@ -130,15 +130,9 @@ impl From<&SetArgs> for MetadataPatch {
     }
 }
 
-pub fn run(filepath: &Path, args: &MetadataArgs) -> error::Result<()> {
-    let Some(command) = args.command.as_ref() else {
-        Cli::command()
-            .find_subcommand_mut("metadata")
-            .expect("metadata subcommand is defined")
-            .print_help()?;
-        return Ok(());
-    };
-    match command {
+pub fn run(command: &FileCommand<Box<MetadataArgs>>) -> error::Result<()> {
+    let metadata_command = &command.args.command;
+    match metadata_command {
         MetadataCommand::Set(args) => {
             if args.is_empty() {
                 Cli::command()
@@ -149,9 +143,9 @@ pub fn run(filepath: &Path, args: &MetadataArgs) -> error::Result<()> {
                     .print_help()?;
                 return Ok(());
             }
-            set_metadata(filepath, args)
+            set_metadata(&command.filepath, args)
         }
-        MetadataCommand::Show(args) => show_metadata(filepath, args),
+        MetadataCommand::Show(args) => show_metadata(&command.filepath, args),
     }
 }
 

@@ -120,3 +120,25 @@ observations:
     promoted_to: null
     crystallized_via: null
     stale: false
+  - id: O12
+    timestamp: "2026-08-12T08:33"
+    provenance: ai-suggested
+    content: "Required filepath omissions should use clap's standard missing-required-argument error unless the CLI has actionable recovery guidance beyond usage and help."
+    context: "User asked whether the generated aigov unzip missing-filepath error is optimal or needs custom handling."
+    potential_type: heuristic
+    bound_to: [N22]
+    promoted: false
+    promoted_to: null
+    crystallized_via: null
+    stale: false
+  - id: O13
+    timestamp: "2026-08-12T08:37"
+    provenance: ai-suggested
+    content: "A shared FileCommand Args container should carry arg_required_else_help when every file-based subcommand should show help after invocation without a filepath."
+    context: "The field-level attribute on MetadataArgs.command did not affect aigov unzip because settings apply to the command being constructed."
+    potential_type: heuristic
+    bound_to: [N22, N23]
+    promoted: false
+    promoted_to: null
+    crystallized_via: null
+    stale: false

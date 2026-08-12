@@ -1,7 +1,8 @@
+use crate::cli::FileCommand;
 use aigov::error;
 use clap::Args;
 use std::fs::File;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use zip::ZipArchive;
 
 #[derive(Args)]
@@ -11,17 +12,18 @@ pub struct UnzipArgs {
 }
 
 /// Unzip a office and store its contents in a subfolder
-pub fn run(filepath: &Path, args: &UnzipArgs) -> error::Result<()> {
-    let file = File::open(filepath)?;
+pub fn run(command: &FileCommand<UnzipArgs>) -> error::Result<()> {
+    let file = File::open(&command.filepath)?;
     let mut archive = ZipArchive::new(file)?;
-    let output_directory = args
+    let output_directory = command
+        .args
         .output
         .clone()
-        .unwrap_or_else(|| filepath.with_extension(""));
+        .unwrap_or_else(|| command.filepath.with_extension(""));
 
     archive.extract(&output_directory)?;
 
-    let filepath = filepath.to_string_lossy();
+    let filepath = command.filepath.to_string_lossy();
     super::print_success(format!("Package unzipped: {filepath}"));
 
     Ok(())
@@ -67,7 +69,11 @@ mod tests {
         archive.finish().unwrap();
         fs::write(&source, bytes.into_inner()).unwrap();
 
-        run(&source, &UnzipArgs { output: None }).unwrap();
+        let command = FileCommand {
+            filepath: source,
+            args: UnzipArgs { output: None },
+        };
+        run(&command).unwrap();
 
         assert_eq!(
             fs::read(output.join("word/document.xml")).unwrap(),
@@ -75,6 +81,6 @@ mod tests {
         );
 
         fs::remove_dir_all(output).unwrap();
-        fs::remove_file(source).unwrap();
+        fs::remove_file(&command.filepath).unwrap();
     }
 }

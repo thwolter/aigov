@@ -1,10 +1,10 @@
-use crate::cli::Cli;
+use crate::cli::{Cli, FileCommand};
 use aigov::error;
 use aigov::formats::Document;
 use aigov::office::OfficeDocument;
 use aigov::office::replacement::{CaseMatching, ReplaceOptions};
 use clap::{Args, CommandFactory};
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 #[derive(Args)]
 pub struct ReplaceArgs {
@@ -39,7 +39,8 @@ impl ReplaceArgs {
     }
 }
 
-pub fn run(filepath: &Path, args: &ReplaceArgs) -> error::Result<()> {
+pub fn run(command: &FileCommand<ReplaceArgs>) -> error::Result<()> {
+    let args = &command.args;
     let (Some(search), Some(replacement)) = (args.search.as_deref(), args.replace.as_deref())
     else {
         Cli::command()
@@ -49,8 +50,8 @@ pub fn run(filepath: &Path, args: &ReplaceArgs) -> error::Result<()> {
         return Ok(());
     };
 
-    let mut document = Document::from_file(filepath)?;
-    let output = args.output.as_deref().unwrap_or(filepath);
+    let mut document = Document::from_file(&command.filepath)?;
+    let output = args.output.as_deref().unwrap_or(&command.filepath);
     let options = args.options();
 
     let count = document.replace_text(search, replacement, options)?;

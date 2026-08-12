@@ -6,3 +6,10 @@ sessions:
     events_count: 30
     claims_touched: []
     open_threads: 3
+  - id: "2026-08-12_001"
+    date: "2026-08-12"
+    summary: "Aligned command-first paths, help settings, and metadata argument borrowing."
+    turn_count: 4
+    events_count: 6
+    claims_touched: []
+    open_threads: 1

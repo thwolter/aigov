@@ -62,3 +62,17 @@ entries:
       - "Recorded the cross-format CLI roadmap as open question N20."
       - "Staged O10 and O11 because the deterministic LLM-boundary positioning and prioritization test are AI suggestions awaiting user selection."
       - "Did not crystallize either observation: this exploratory turn contains no affirmation or artifact commitment."
+  - turn: "2026-08-12_001#1"
+    notes:
+      - "Recorded the focused parser verification as experiment N21; no interpretive observation was staged."
+  - turn: "2026-08-12_001#2"
+    notes:
+      - "Recorded the UX choice as open question N22 and staged O12 as a heuristic because the user has not selected the behavior."
+      - "Did not crystallize O12: documentation support is not user affirmation or artifact commitment."
+  - turn: "2026-08-12_001#3"
+    notes:
+      - "Recorded the failed field-level setting as dead end N23 and staged the FileCommand placement as O13."
+      - "Did not crystallize O13 because the user has not adopted or tested the corrected placement."
+  - turn: "2026-08-12_001#4"
+    notes:
+      - "Recorded the verified metadata borrowing fix as experiment N24; no interpretive observation was staged."

@@ -1,4 +1,4 @@
-use crate::cli::{Cli, print_success, print_warning};
+use crate::cli::{Cli, FileCommand, print_success, print_warning};
 use aigov::error;
 use aigov::formats::Document;
 use aigov::office::OfficeDocument;
@@ -82,16 +82,16 @@ struct UpdateArgs {
     preset: Option<PolicyPreset>,
 }
 
-pub fn run(filepath: &PathBuf, args: &PolicyArgs) -> error::Result<()> {
-    let Some(command) = args.command.as_ref() else {
+pub fn run(command: &FileCommand<PolicyArgs>) -> error::Result<()> {
+    let Some(policy_command) = command.args.command.as_ref() else {
         Cli::command()
             .find_subcommand_mut("policy")
             .expect("policy subcommand is defined")
             .print_help()?;
         return Ok(());
     };
-    let mut document = Document::from_file(filepath)?;
-    let output = output_path(filepath, command);
+    let mut document = Document::from_file(&command.filepath)?;
+    let output = output_path(command.filepath.as_path(), policy_command);
 
     {
         let Some(policy_document) = document.as_ai_policy_document() else {
@@ -99,7 +99,7 @@ pub fn run(filepath: &PathBuf, args: &PolicyArgs) -> error::Result<()> {
                 "document format does not support AI policies".into(),
             ));
         };
-        match command {
+        match policy_command {
             PolicyCommand::Inject(apply_args) => {
                 let policy = apply_args
                     .preset

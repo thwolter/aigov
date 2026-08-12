@@ -187,3 +187,40 @@ tree:
       Which additional commands should aigov expose across Office formats when each
       command must be faster, safer, or cleaner than performing the task through an LLM?
     status: open
+  - id: N21
+    type: experiment
+    title: "Command-first metadata argument parsing"
+    provenance: ai-executed
+    timestamp: "2026-08-12T08:30"
+    result: >
+      Removing the obsolete root filepath and using metadata-owned FileCommand
+      paths made the editable-fields parser test pass with one filepath.
+    evidence: ["cargo test metadata_set_accepts_editable_fields_only"]
+    status: resolved
+  - id: N22
+    type: question
+    title: "Missing filepath CLI behavior"
+    provenance: user
+    timestamp: "2026-08-12T08:33"
+    description: "Should aigov replace clap's standard missing-required-filepath error with custom handling?"
+    status: open
+  - id: N23
+    type: dead_end
+    title: "Field-level help setting"
+    provenance: user
+    timestamp: "2026-08-12T08:37"
+    hypothesis: "Combining subcommand and arg_required_else_help on MetadataArgs.command changes missing filepath behavior for unzip."
+    failure_mode: "The setting targets the nested metadata field, not the outer FileCommand-based unzip command."
+    lesson: "Apply command settings to the command container that owns the missing argument."
+    status: resolved
+  - id: N24
+    type: experiment
+    title: "Borrow metadata command payloads"
+    provenance: ai-executed
+    timestamp: "2026-08-12T08:41"
+    result: >
+      Matching MetadataCommand by reference allowed boxed SetArgs and ShowArgs
+      to dereference-coerce into the borrowed handler parameters. The focused
+      parser test and cargo check passed.
+    evidence: ["cargo test metadata_set_accepts_editable_fields_only", "cargo check"]
+    status: resolved
