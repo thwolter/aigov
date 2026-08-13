@@ -1,3 +1,4 @@
+mod convert;
 pub mod metadata;
 pub mod pdf;
 pub mod policy;
@@ -38,6 +39,15 @@ pub enum Commands {
 
     /// Manage the document's policy.
     Policy(FileCommand<policy::PolicyArgs>),
+
+    /// Convert a document to Markdown
+    Markdown(FileCommand<convert::MarkdownArgs>),
+
+    /// Convert a document to JSON
+    Json(FileCommand<convert::JsonArgs>),
+
+    /// Extract resources (images, media) from a document
+    Extract(FileCommand<convert::ExtractArgs>),
 }
 
 #[derive(Args)]
@@ -64,6 +74,9 @@ pub fn run() -> error::Result<()> {
         Commands::Pdf(command) => pdf::run(command),
         Commands::Replace(command) => replace::run(command),
         Commands::Policy(command) => policy::run(command),
+        Commands::Markdown(command) => convert::run_markdown(command),
+        Commands::Json(command) => convert::run_json(command),
+        Commands::Extract(command) => convert::run_extract(command),
     }
 }
 
