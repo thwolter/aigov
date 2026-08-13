@@ -1,8 +1,9 @@
-use crate::cli::FileCommand;
+use crate::cli::{FileCommand, create_spinner, print_success};
 use aigov::error;
 use clap::{Args, ValueEnum};
+use std::fs;
 use std::path::PathBuf;
-use undoc::render::{CleanupPreset, TableFallback};
+use undoc::render::{CleanupPreset, HeadingConfig, RenderOptions, TableFallback};
 
 #[derive(Args)]
 pub struct MarkdownArgs {
@@ -66,7 +67,7 @@ pub struct ExtractArgs {
 }
 
 /// Table rendering mode
-#[derive(Clone, ValueEnum)]
+#[derive(Clone, Copy, ValueEnum)]
 enum TableMode {
     /// Standard Markdown tables
     Markdown,
@@ -87,7 +88,7 @@ impl From<TableMode> for TableFallback {
 }
 
 /// Cleanup mode
-#[derive(Clone, ValueEnum)]
+#[derive(Clone, Copy, ValueEnum)]
 enum CleanupMode {
     /// No cleanup
     None,
@@ -111,7 +112,52 @@ impl CleanupMode {
 }
 
 pub(crate) fn run_markdown(command: &FileCommand<MarkdownArgs>) -> error::Result<()> {
-    return Ok(());
+    let pb = create_spinner("Parsing document...");
+
+    let output = command
+        .args
+        .output
+        .as_deref()
+        .unwrap_or(&command.filepath.with_extension("md"))
+        .to_path_buf();
+
+    let doc = undoc::parse_file(&command.filepath)?;
+    pb.set_message("Rendering to Markdown...");
+
+    let heading_config = HeadingConfig::default().with_default_style_mapping();
+    let base = if command.args.lossless {
+        RenderOptions::lossless()
+    } else {
+        RenderOptions::new()
+            .with_emit_page_breaks(command.args.emit_page_breaks)
+            .with_include_headers_footers(command.args.include_headers_footers)
+    };
+    let mut options = base
+        .with_frontmatter(command.args.frontmatter)
+        .with_table_fallback(command.args.table_mode.into())
+        .with_max_heading(command.args.max_heading)
+        .with_heading_config(heading_config);
+
+    if command.args.section_markers {
+        options = options.with_section_markers(undoc::SectionMarkerStyle::Comment);
+    }
+
+    if let Some(preset) = command.args.cleanup.and_then(CleanupMode::to_preset) {
+        options = options.with_cleanup_preset(preset);
+    }
+
+    let markdown = undoc::render::to_markdown(&doc, &options)?;
+
+    pb.finish_and_clear();
+    fs::write(&output, &markdown)?;
+
+    if command.args.output.is_some() {
+        print_success("Converted to Markdown");
+    } else {
+        print_success(format!("Converted to Markdown ({:?})", output));
+    }
+
+    Ok(())
 }
 
 pub(crate) fn run_json(command: &FileCommand<JsonArgs>) -> error::Result<()> {
@@ -120,4 +166,32 @@ pub(crate) fn run_json(command: &FileCommand<JsonArgs>) -> error::Result<()> {
 
 pub(crate) fn run_extract(command: &FileCommand<ExtractArgs>) -> error::Result<()> {
     return Ok(());
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::cli::{Cli, Commands};
+    use clap::Parser;
+
+    #[test]
+    fn convert_docx_to_md() {
+        let dir = tempfile::tempdir().unwrap();
+        let output = dir.path().join("output.md");
+        let Some(Commands::Markdown(command)) = Cli::try_parse_from([
+            "aigov",
+            "markdown",
+            concat!(env!("CARGO_MANIFEST_DIR"), "/tests/fixtures/convert.docx"),
+            "-o",
+            output.to_str().unwrap(),
+        ])
+        .unwrap()
+        .command
+        else {
+            panic!("expected markdown command");
+        };
+
+        run_markdown(&command).unwrap();
+        assert!(!fs::read_to_string(output).unwrap().is_empty());
+    }
 }

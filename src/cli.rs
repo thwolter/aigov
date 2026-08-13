@@ -12,6 +12,8 @@ use std::path::PathBuf;
 use aigov::error;
 use clap::{Args, CommandFactory, Parser, Subcommand};
 
+use indicatif::{ProgressBar, ProgressStyle};
+
 /// Doc comment
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
@@ -41,6 +43,7 @@ pub enum Commands {
     Policy(FileCommand<policy::PolicyArgs>),
 
     /// Convert a document to Markdown
+    #[command(visible_alias = "md")]
     Markdown(FileCommand<convert::MarkdownArgs>),
 
     /// Convert a document to JSON
@@ -147,4 +150,17 @@ pub(crate) fn print_error(message: impl std::fmt::Display) {
     } else {
         eprintln!("✗ {message}");
     }
+}
+
+fn create_spinner(message: &str) -> ProgressBar {
+    let pb = ProgressBar::new_spinner();
+    pb.set_style(
+        ProgressStyle::default_spinner()
+            .tick_strings(&["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"])
+            .template("{spinner:.blue} {msg}")
+            .unwrap(),
+    );
+    pb.set_message(message.to_string());
+    pb.enable_steady_tick(std::time::Duration::from_millis(100));
+    pb
 }

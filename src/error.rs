@@ -68,6 +68,9 @@ pub enum OfficeError {
         command: &'static str,
     },
 
+    #[error("Document processing error: {0}")]
+    Undoc(#[from] undoc::Error),
+
     #[error("AI policy error: {0}")]
     InvalidAiPolicy(String),
 }
