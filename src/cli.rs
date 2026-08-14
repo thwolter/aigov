@@ -7,7 +7,7 @@ pub mod unzip;
 
 use std::io;
 use std::io::IsTerminal;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use aigov::error;
 use clap::{Args, CommandFactory, Parser, Subcommand};
@@ -163,4 +163,10 @@ fn create_spinner(message: &str) -> ProgressBar {
     pb.set_message(message.to_string());
     pb.enable_steady_tick(std::time::Duration::from_millis(100));
     pb
+}
+
+fn output_path(input: &Path, output: Option<&Path>, extension: &str) -> PathBuf {
+    output
+        .map(Path::to_path_buf)
+        .unwrap_or_else(|| input.with_extension(extension))
 }

@@ -1,3 +1,4 @@
+use crate::cli;
 use crate::cli::{FileCommand, create_spinner, print_success};
 use aigov::error;
 use clap::{Args, ValueEnum};
@@ -114,12 +115,7 @@ impl CleanupMode {
 pub(crate) fn run_markdown(command: &FileCommand<MarkdownArgs>) -> error::Result<()> {
     let pb = create_spinner("Parsing document...");
 
-    let output = command
-        .args
-        .output
-        .as_deref()
-        .unwrap_or(&command.filepath.with_extension("md"))
-        .to_path_buf();
+    let output = cli::output_path(&command.filepath, command.args.output.as_deref(), "md");
 
     let doc = undoc::parse_file(&command.filepath)?;
     pb.set_message("Rendering to Markdown...");
@@ -151,21 +147,21 @@ pub(crate) fn run_markdown(command: &FileCommand<MarkdownArgs>) -> error::Result
     pb.finish_and_clear();
     fs::write(&output, &markdown)?;
 
-    if command.args.output.is_some() {
-        print_success("Converted to Markdown");
+    if let Some(path) = command.args.output.as_deref() {
+        print_success(format!("Converted to Markdown ({})", path.display()));
     } else {
-        print_success(format!("Converted to Markdown ({:?})", output));
+        print_success("Converted to Markdown");
     }
 
     Ok(())
 }
 
-pub(crate) fn run_json(command: &FileCommand<JsonArgs>) -> error::Result<()> {
-    return Ok(());
+pub(crate) fn run_json(_command: &FileCommand<JsonArgs>) -> error::Result<()> {
+    todo!()
 }
 
-pub(crate) fn run_extract(command: &FileCommand<ExtractArgs>) -> error::Result<()> {
-    return Ok(());
+pub(crate) fn run_extract(_command: &FileCommand<ExtractArgs>) -> error::Result<()> {
+    todo!()
 }
 
 #[cfg(test)]
@@ -192,6 +188,6 @@ mod tests {
         };
 
         run_markdown(&command).unwrap();
-        assert!(!fs::read_to_string(output).unwrap().is_empty());
+        assert!(!fs::read_to_string(&output).unwrap().is_empty());
     }
 }
