@@ -1,6 +1,6 @@
-use crate::cli::{Cli, FileCommand};
+use crate::cli::{DestinationArgs, FileCommand};
 use aigov::error;
-use clap::{Args, CommandFactory, Subcommand};
+use clap::{Args, Subcommand};
 use ooxml;
 use ooxml::MetadataPatch;
 use ooxml::OoxmlPackage;
@@ -25,6 +25,7 @@ enum MetadataCommand {
 }
 
 #[derive(Args)]
+#[command(arg_required_else_help = true)]
 struct SetArgs {
     #[arg(long, short)]
     pub title: Option<String>,
@@ -67,6 +68,9 @@ struct SetArgs {
 
     #[arg(long, short)]
     pub profile: Option<PathBuf>,
+
+    #[command(flatten)]
+    destination: DestinationArgs,
 }
 
 #[derive(Args)]
@@ -83,25 +87,6 @@ fn parse_custom_property(value: &str) -> std::result::Result<(String, String), S
         return Err("property name cannot be empty".into());
     }
     Ok((name.into(), value.into()))
-}
-
-impl SetArgs {
-    pub fn is_empty(&self) -> bool {
-        self.title.is_none()
-            && self.description.is_none()
-            && self.author.is_none()
-            && self.keywords.is_none()
-            && self.creator.is_none()
-            && self.subject.is_none()
-            && self.category.is_none()
-            && self.content_status.is_none()
-            && self.content_type.is_none()
-            && self.language.is_none()
-            && self.identifier.is_none()
-            && self.version.is_none()
-            && self.custom.is_empty()
-            && self.profile.is_none()
-    }
 }
 
 impl From<&SetArgs> for MetadataPatch {
@@ -134,18 +119,7 @@ impl From<&SetArgs> for MetadataPatch {
 pub fn run(command: &FileCommand<Box<MetadataArgs>>) -> error::Result<()> {
     let metadata_command = &command.args.command;
     match metadata_command {
-        MetadataCommand::Set(args) => {
-            if args.is_empty() {
-                Cli::command()
-                    .find_subcommand_mut("metadata")
-                    .expect("metadata subcommand is defined")
-                    .find_subcommand_mut("set")
-                    .expect("set subcommand is defined")
-                    .print_help()?;
-                return Ok(());
-            }
-            set_metadata(&command.input, args)
-        }
+        MetadataCommand::Set(args) => set_metadata(&command.input, args),
         MetadataCommand::Show(args) => show_metadata(&command.input, args),
     }
 }
@@ -209,8 +183,8 @@ fn show_metadata(filepath: &Path, args: &ShowArgs) -> error::Result<()> {
     Ok(())
 }
 
-fn set_metadata(filepath: &Path, args: &SetArgs) -> error::Result<()> {
-    let mut package = OoxmlPackage::from_file(filepath)?;
+fn set_metadata(input: &Path, args: &SetArgs) -> error::Result<()> {
+    let mut package = OoxmlPackage::from_file(input)?;
     let mut metadata = ooxml::read_metadata(&package)?;
 
     if let Some(profile) = &args.profile {
@@ -220,9 +194,9 @@ fn set_metadata(filepath: &Path, args: &SetArgs) -> error::Result<()> {
     MetadataPatch::from(args).apply_to(&mut metadata)?;
 
     ooxml::write_metadata(&mut package, &metadata)?;
-    package.save(Path::new(filepath))?;
+    package.save(args.destination.output_or(input))?;
 
-    let filepath = filepath.to_string_lossy();
+    let filepath = input.to_string_lossy();
     super::print_success(format!("Metadata updated: {filepath}"));
 
     Ok(())
@@ -231,29 +205,7 @@ fn set_metadata(filepath: &Path, args: &SetArgs) -> error::Result<()> {
 #[cfg(test)]
 mod tests {
     use super::{MetadataPatch, SetArgs};
-
-    #[test]
-    fn detects_an_empty_update() {
-        assert!(
-            SetArgs {
-                title: None,
-                description: None,
-                author: None,
-                keywords: None,
-                creator: None,
-                subject: None,
-                category: None,
-                content_status: None,
-                content_type: None,
-                language: None,
-                identifier: None,
-                version: None,
-                custom: Vec::new(),
-                profile: None,
-            }
-            .is_empty()
-        );
-    }
+    use crate::cli::DestinationArgs;
 
     #[test]
     fn converts_custom_properties_to_a_metadata_patch() {
@@ -272,6 +224,10 @@ mod tests {
             version: None,
             custom: vec![("Client".into(), "Acme".into())],
             profile: None,
+            destination: DestinationArgs {
+                output: None,
+                in_place: false,
+            },
         };
 
         let patch = MetadataPatch::from(&args);

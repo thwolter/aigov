@@ -15,8 +15,8 @@ sessions:
     open_threads: 1
   - id: "2026-08-15_001"
     date: "2026-08-15"
-    summary: "Compared CLI path and output conventions and staged an aigov help redesign."
-    turn_count: 1
-    events_count: 5
+    summary: "Compared CLI path and output conventions and verified empty metadata-set help behavior."
+    turn_count: 2
+    events_count: 6
     claims_touched: []
     open_threads: 1

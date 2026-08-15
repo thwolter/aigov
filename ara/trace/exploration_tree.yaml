@@ -257,3 +257,20 @@ tree:
       - "https://pandoc.org/MANUAL.html"
       - "https://www.gnu.org/prep/standards/html_node/Command_002dLine-Interfaces"
     status: resolved
+  - id: N27
+    type: experiment
+    title: "Metadata set empty-invocation parser behavior"
+    provenance: ai-executed
+    timestamp: "2026-08-15T18:15"
+    result: >
+      The current required DestinationArgs group rejects an empty metadata set
+      invocation before MetadataArgs::run can print help. Adding
+      arg_required_else_help to the SetArgs command makes the empty leaf command
+      display help first, while an invocation containing an update option still
+      reaches the required destination-group validation.
+    evidence:
+      - "cargo run -q -- metadata report.docx set"
+      - "cargo run -q -- metadata report.docx set --title Draft"
+      - "aigov/src/cli/metadata.rs:27-73"
+      - "https://docs.rs/clap/latest/clap/builder/struct.Command.html"
+    status: resolved

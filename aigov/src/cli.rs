@@ -54,6 +54,28 @@ enum Commands {
 }
 
 #[derive(Args)]
+#[group(required = true, multiple = false)]
+struct DestinationArgs {
+    #[arg(
+        short,
+        long,
+        value_name = "FILE",
+        help = "Write the updated document to FILE"
+    )]
+    output: Option<PathBuf>,
+
+    #[arg(long, help = "Update the input document")]
+    in_place: bool,
+}
+
+impl DestinationArgs {
+    /// Returns the output path or the input path if no output path is specified
+    pub fn output_or<'a>(&'a self, input: &'a Path) -> &'a Path {
+        self.output.as_deref().unwrap_or(input)
+    }
+}
+
+#[derive(Args)]
 #[command(arg_required_else_help = true)]
 pub(crate) struct FileCommand<T: Args> {
     #[arg(value_name = "FILE", help = "Path to the document")]
@@ -102,6 +124,7 @@ mod tests {
                 "Client=Acme",
                 "--custom",
                 "Classification=Internal",
+                "--in-place"
             ])
             .is_ok()
         );

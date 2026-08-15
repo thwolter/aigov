@@ -2,9 +2,9 @@ session:
   id: "2026-08-15_001"
   date: "2026-08-15"
   started: "2026-08-15T17:08"
-  last_turn: "2026-08-15T17:08"
-  turn_count: 1
-  summary: "Compared CLI path and output conventions and staged an aigov help redesign."
+  last_turn: "2026-08-15T18:15"
+  turn_count: 2
+  summary: "Compared CLI path and output conventions and verified empty metadata-set help behavior."
 
 events_logged:
   - turn: 1
@@ -37,6 +37,12 @@ events_logged:
     routing: staged
     provenance: ai-suggested
     summary: "Separate mutation destination choice from overwrite collision policy."
+  - turn: 2
+    type: experiment
+    id: N27
+    routing: direct
+    provenance: ai-executed
+    summary: "Verified that the destination group masks empty-set help until SetArgs owns arg_required_else_help."
 
 ai_actions:
   - turn: 1
@@ -45,6 +51,14 @@ ai_actions:
     files_changed:
       - "ara/trace/exploration_tree.yaml"
       - "ara/staging/observations.yaml"
+      - "ara/trace/sessions/session_index.yaml"
+      - "ara/trace/pm_reasoning_log.yaml"
+      - "ara/trace/sessions/2026-08-15_001.yaml"
+  - turn: 2
+    action: "Inspected current metadata destination parsing and verified empty and partial invocations without changing application code."
+    provenance: ai-executed
+    files_changed:
+      - "ara/trace/exploration_tree.yaml"
       - "ara/trace/sessions/session_index.yaml"
       - "ara/trace/pm_reasoning_log.yaml"
       - "ara/trace/sessions/2026-08-15_001.yaml"
@@ -64,3 +78,4 @@ ai_suggestions_pending:
   - "Keep input and output local to their owning leaf commands."
   - "Use input internally and FILE, DIR, or PATH in generated help."
   - "Require --output FILE or --in-place for mutations, with overwrite handled separately."
+  - "Add arg_required_else_help to SetArgs so an empty metadata set invocation displays its help."

@@ -82,3 +82,7 @@ entries:
       - "Staged O14 through O16 as unconfirmed placement, naming, and mutation-safety guidance; no user affirmation or artifact commitment occurred."
       - "Did not crystallize prior CLI observations O12 or O13: the turn revisited adjacent help design but did not affirm their exact recommendations."
       - "Did not mark older observations stale: this is only the third recorded session-day and the three-session-day threshold is not clearly exceeded."
+  - turn: "2026-08-15_001#2"
+    notes:
+      - "Recorded N27 as an experiment because generated parser output demonstrated the empty-invocation precedence issue."
+      - "Did not crystallize O16: the current uncommitted destination group establishes parser validation only; output persistence and user adoption remain unverified."
