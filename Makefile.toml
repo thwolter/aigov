@@ -1,18 +1,23 @@
 [tasks.check]
+workspace = false
 command = "cargo"
 args = ["check"]
 
 [tasks.test]
+workspace = false
 command = "cargo"
 args = ["test"]
 
 [tasks.ci]
+workspace = false
 dependencies = ["fmt", "clippy", "test"]
 
 [tasks.fmt]
+workspace = false
 command = "cargo"
 args = ["fmt"]
 
 [tasks.clippy]
+workspace = false
 command = "cargo"
 args = ["clippy", "--", "-D", "warnings"]

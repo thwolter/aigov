@@ -1,8 +1,7 @@
 # aigov
 
-`aigov` is a Rust library and command-line tool for inspecting and modifying
-OOXML Office documents. Library document opening, metadata updates, and text
-replacement currently support DOCX files.
+`aigov` is a Rust library and command-line tool for inspecting and modifying OOXML Office documents. Library document
+opening, metadata updates, and text replacement currently support DOCX files.
 
 ## Quick start
 
@@ -29,13 +28,12 @@ cargo run -- report.docx replace \
   --output published-report.docx
 ```
 
-Use `cargo run -- <FILEPATH> --help` for all available commands. PDF conversion
-requires LibreOffice and the `soffice` command on `PATH`.
+Use `cargo run -- <FILEPATH> --help` for all available commands. PDF conversion requires LibreOffice and the `soffice`
+command on `PATH`.
 
 ## Library
 
-Open a document through format dispatch, reject structural errors, and save a
-copy:
+Open a document through format dispatch, reject structural errors, and save a copy:
 
 ```rust,no_run
 use aigov::{
@@ -61,8 +59,8 @@ document.save(Path::new("published-report.docx"))?;
 
 For concrete DOCX construction and OOXML package access, see
 [`DocxDocument`](https://docs.rs/aigov/latest/aigov/formats/struct.DocxDocument.html),
-[`OfficeDocument`](https://docs.rs/aigov/latest/aigov/office/trait.OfficeDocument.html),
-and [`OoxmlDocument`](https://docs.rs/aigov/latest/aigov/office/trait.OoxmlDocument.html).
+[`OfficeDocument`](https://docs.rs/aigov/latest/aigov/office/trait.OfficeDocument.html), and [
+`OoxmlDocument`](https://docs.rs/aigov/latest/aigov/office/trait.OoxmlDocument.html).
 
 ## Development
 
@@ -74,7 +72,6 @@ cargo doc --no-deps
 
 ## Publishing
 
-Cargo includes this README on the package page because `Cargo.toml` declares
+Cargo includes this README on the package page because `aigov/Cargo.toml` declares
 `readme = "README.md"`. Before publishing publicly, set the package `license`
-and `repository` fields (and `homepage`, `keywords`, and `categories` when they
-are known).
+and `repository` fields (and `homepage`, `keywords`, and `categories` when they are known).
