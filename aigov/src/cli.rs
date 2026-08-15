@@ -53,7 +53,7 @@ enum Commands {
     Extract(FileCommand<convert::ExtractArgs>),
 }
 
-#[derive(Args)]
+#[derive(Args, Clone)]
 #[group(required = true, multiple = false)]
 struct DestinationArgs {
     #[arg(
