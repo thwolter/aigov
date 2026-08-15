@@ -177,7 +177,7 @@ mod tests {
         let Some(Commands::Markdown(command)) = Cli::try_parse_from([
             "aigov",
             "markdown",
-            concat!(env!("CARGO_MANIFEST_DIR"), "/tests/fixtures/convert.docx"),
+            concat!(env!("CARGO_MANIFEST_DIR"), "/tests/fixtures/test.docx"),
             "-o",
             output.to_str().unwrap(),
         ])
