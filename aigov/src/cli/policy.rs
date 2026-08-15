@@ -1,15 +1,15 @@
-use crate::cli::{Cli, FileCommand, print_success, print_warning};
+use crate::cli::{DestinationArgs, FileCommand, print_success, print_warning};
 use aigov::error;
 use aigov::formats::Document;
 use aigov::office::OfficeDocument;
 use aigov::office::policy::AiPolicy;
-use clap::{Args, CommandFactory, Subcommand, ValueEnum};
-use std::path::{Path, PathBuf};
+use clap::{Args, Subcommand, ValueEnum};
 
 #[derive(Args)]
+#[command(arg_required_else_help = true)]
 pub struct PolicyArgs {
     #[command(subcommand)]
-    command: Option<PolicyCommand>,
+    command: PolicyCommand,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, ValueEnum)]
@@ -61,7 +61,7 @@ enum PolicyCommand {
     Update(UpdateArgs),
 
     /// Remove a policy if one exists
-    Remove,
+    Remove(RemoveArgs),
 
     /// Validate policy
     Validate,
@@ -69,29 +69,30 @@ enum PolicyCommand {
 
 #[derive(Args)]
 struct InjectArgs {
-    #[arg(short, long, help = "Output file path")]
-    output: Option<PathBuf>,
-
     #[arg(short, long, help = "Policy preset to apply")]
     preset: Option<PolicyPreset>,
+
+    #[command(flatten)]
+    destination: DestinationArgs,
 }
 
 #[derive(Args)]
 struct UpdateArgs {
     #[arg(short, long, help = "Policy preset to apply")]
     preset: Option<PolicyPreset>,
+
+    #[command(flatten)]
+    destination: DestinationArgs,
+}
+
+#[derive(Args)]
+struct RemoveArgs {
+    #[command(flatten)]
+    destination: DestinationArgs,
 }
 
 pub fn run(command: &FileCommand<PolicyArgs>) -> error::Result<()> {
-    let Some(policy_command) = command.args.command.as_ref() else {
-        Cli::command()
-            .find_subcommand_mut("policy")
-            .expect("policy subcommand is defined")
-            .print_help()?;
-        return Ok(());
-    };
     let mut document = Document::from_file(&command.input)?;
-    let output = output_path(command.input.as_path(), policy_command);
 
     {
         let Some(policy_document) = document.as_ai_policy_document() else {
@@ -99,7 +100,7 @@ pub fn run(command: &FileCommand<PolicyArgs>) -> error::Result<()> {
                 "document format does not support AI policies".into(),
             ));
         };
-        match policy_command {
+        match &command.args.command {
             PolicyCommand::Inject(apply_args) => {
                 let policy = apply_args
                     .preset
@@ -107,6 +108,7 @@ pub fn run(command: &FileCommand<PolicyArgs>) -> error::Result<()> {
                     .unwrap_or(&PolicyPreset::Standard)
                     .policy();
                 policy_document.inject_policy(&policy)?;
+                document.save(apply_args.destination.output_or(&command.input))?;
                 print_success("Policy injected")
             }
             PolicyCommand::Update(apply_args) => {
@@ -116,31 +118,25 @@ pub fn run(command: &FileCommand<PolicyArgs>) -> error::Result<()> {
                     .unwrap_or(&PolicyPreset::Standard)
                     .policy();
                 policy_document.update_policy(&policy)?;
+                document.save(apply_args.destination.output_or(&command.input))?;
                 print_success("Policy updated")
             }
-            PolicyCommand::Remove => match policy_document.remove_policy()? {
-                true => print_success("Policy removed"),
-                false => print_warning("No policy to remove"),
-            },
+            PolicyCommand::Remove(apply_args) => {
+                match policy_document.remove_policy()? {
+                    true => print_success("Policy removed"),
+                    false => print_warning("No policy to remove"),
+                };
+                document.save(apply_args.destination.output_or(&command.input))?;
+            }
             PolicyCommand::Validate => policy_document.validate_policy()?,
         }
     }
-    document.save(output)?;
     Ok(())
-}
-
-fn output_path<'a>(filepath: &'a Path, command: &'a PolicyCommand) -> &'a Path {
-    match command {
-        PolicyCommand::Inject(args) => args.output.as_deref().unwrap_or(filepath),
-        _ => filepath,
-    }
 }
 
 #[cfg(test)]
 mod tests {
-    use std::path::{Path, PathBuf};
-
-    use super::{InjectArgs, PolicyCommand, PolicyPreset, output_path};
+    use super::PolicyPreset;
 
     #[test]
     fn presets_map_to_their_expected_policies() {
@@ -153,18 +149,5 @@ mod tests {
         assert!(!standard.attribution_required);
         assert!(restricted.attribution_required);
         assert!(!restricted.training_allowed);
-    }
-
-    #[test]
-    fn inject_uses_requested_output_path() {
-        let command = PolicyCommand::Inject(InjectArgs {
-            output: Some(PathBuf::from("protected.docx")),
-            preset: None,
-        });
-
-        assert_eq!(
-            output_path(Path::new("source.docx"), &command),
-            Path::new("protected.docx")
-        );
     }
 }
