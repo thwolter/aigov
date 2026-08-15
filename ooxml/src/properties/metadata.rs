@@ -19,7 +19,7 @@ use std::collections::BTreeMap;
 /// # Examples
 ///
 /// ```
-/// use ooxml::properties::metadata::Metadata;
+/// use ooxml::Metadata;
 ///
 /// let mut metadata = Metadata::default();
 /// metadata.core.title = Some("Quarterly report".into());

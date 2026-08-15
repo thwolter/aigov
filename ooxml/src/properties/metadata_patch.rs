@@ -13,7 +13,7 @@ use std::collections::BTreeMap;
 /// # Examples
 ///
 /// ```
-/// use aigov::office::metadata::{MetadataPatch, Metadata};
+/// use ooxml::{MetadataPatch, Metadata};
 ///
 /// let mut metadata = Metadata::default();
 /// let patch = MetadataPatch::from_json(
@@ -23,7 +23,7 @@ use std::collections::BTreeMap;
 ///
 /// assert_eq!(metadata.core.title.as_deref(), Some("New title"));
 /// assert_eq!(metadata.core.keywords, ["rust", "office"]);
-/// # Ok::<(), aigov::error::OfficeError>(())
+/// # Ok::<(), ooxml::error::OoxmlError>(())
 /// ```
 #[derive(Debug, Default, Deserialize)]
 #[serde(deny_unknown_fields)]

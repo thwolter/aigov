@@ -17,7 +17,7 @@ pub fn run(command: &FileCommand<PdfArgs>) -> error::Result<()> {
         .args
         .output
         .as_deref()
-        .unwrap_or(command.filepath.parent().unwrap());
+        .unwrap_or(command.input.parent().unwrap());
     let status = Command::new("soffice")
         .args([
             "--headless",
@@ -25,7 +25,7 @@ pub fn run(command: &FileCommand<PdfArgs>) -> error::Result<()> {
             "pdf",
             "--outdir",
             output_dir.to_str().unwrap(),
-            command.filepath.to_str().unwrap(),
+            command.input.to_str().unwrap(),
         ])
         .status()
         .map_err(|error| match error.kind() {
@@ -60,7 +60,7 @@ mod tests {
             output: Some(dir.path().join("test")),
         };
         let command = FileCommand {
-            filepath: input.to_path_buf(),
+            input: input.to_path_buf(),
             args: pdf_args,
         };
         run(&command).unwrap();

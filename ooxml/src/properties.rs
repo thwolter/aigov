@@ -18,11 +18,10 @@ pub(crate) mod metadata_patch;
 /// Read the title from an existing Office document:
 ///
 /// ```no_run
-/// use ooxml;
-/// use ooxml::opc::OoxmlPackage;
+/// use ooxml::OoxmlPackage;
 ///
 /// fn main() -> ooxml::error::Result<()> {
-/// let package = OoxmlPackage::from_file("report.docx")?;
+/// let package = ooxml::OoxmlPackage::from_file("report.docx")?;
 /// let metadata = ooxml::read_metadata(&package)?;
 ///
 /// if let Some(title) = metadata.core.title {
@@ -52,15 +51,14 @@ pub fn read_metadata(package: &OoxmlPackage) -> Result<Metadata> {
 /// Update a document's title and add a custom property, then save the result:
 ///
 /// ```no_run
-/// use aigov::{
-///     office::metadata::Metadata,
-/// ///     /// };
-/// use std::path::Path;///
-/// #
-/// use ooxml::ooxml::{read_metadata, write_metadata};
-/// use ooxml::package::OoxmlPackage;
+/// use ooxml::Metadata;
 ///
-/// fn main() -> aigov::error::Result<()> {
+/// use std::path::Path;///
+///
+/// use ooxml::{read_metadata, write_metadata};
+/// use ooxml::OoxmlPackage;
+///
+/// fn main() -> ooxml::error::Result<()> {
 /// let mut package = OoxmlPackage::from_file("report.docx")?;
 /// let mut metadata: Metadata = read_metadata(&package)?;
 /// metadata.core.title = Some("Quarterly report".into());
@@ -69,7 +67,7 @@ pub fn read_metadata(package: &OoxmlPackage) -> Result<Metadata> {
 /// write_metadata(&mut package, &metadata)?;
 /// package.save(Path::new("report-with-metadata.docx"))?;
 /// # Ok(())
-/// # }
+/// }
 /// ```
 pub fn write_metadata(package: &mut OoxmlPackage, metadata: &Metadata) -> Result<()> {
     core::write_to(package, metadata)?;

@@ -48,7 +48,7 @@ const ROOT_RELS: &str = "_rels/.rels";
 /// }
 ///
 /// document.save(Path::new("published-report.docx"))?;
-/// # Ok::<(), Box<dyn std::Error>>(())
+/// # Ok::<(), Box<dyn std::error::Error>>(())
 /// ```
 pub struct DocxDocument {
     package: OoxmlPackage,

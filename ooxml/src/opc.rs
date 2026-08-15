@@ -27,10 +27,10 @@ pub use part::PartName;
 /// Inspect and update a package part:
 ///
 /// ```no_run
-/// use ooxml::opc::{OoxmlPackage, PartName};
+/// use ooxml::{OoxmlPackage, PartName};
 /// use std::path::Path;
 ///
-/// # fn main() -> aigov::error::Result<()> {
+/// # fn main() -> ooxml::error::Result<()> {
 /// let mut package = OoxmlPackage::from_file("report.docx")?;
 /// let document = PartName::from("word/document.xml");
 ///

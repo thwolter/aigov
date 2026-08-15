@@ -144,9 +144,9 @@ pub fn run(command: &FileCommand<Box<MetadataArgs>>) -> error::Result<()> {
                     .print_help()?;
                 return Ok(());
             }
-            set_metadata(&command.filepath, args)
+            set_metadata(&command.input, args)
         }
-        MetadataCommand::Show(args) => show_metadata(&command.filepath, args),
+        MetadataCommand::Show(args) => show_metadata(&command.input, args),
     }
 }
 

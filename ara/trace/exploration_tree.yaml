@@ -224,3 +224,36 @@ tree:
       parser test and cargo check passed.
     evidence: ["cargo test metadata_set_accepts_editable_fields_only", "cargo check"]
     status: resolved
+  - id: N25
+    type: question
+    title: "CLI file and output argument placement"
+    provenance: user
+    timestamp: "2026-08-15T17:08"
+    description: >
+      Should input paths and --output appear in root help when only selected
+      commands use them, and should the input be named filepath or input?
+    status: open
+  - id: N26
+    type: experiment
+    title: "CLI help convention comparison"
+    provenance: ai-executed
+    timestamp: "2026-08-15T17:08"
+    result: >
+      Generated aigov help and installed Git, Cargo, ripgrep, sips, textutil,
+      plutil, mdls, and ditto help were compared with current Clap, Git, Cargo,
+      Docker, Pandoc, GNU, and Apple documentation. Command-tree tools keep
+      file operands on the owning command, while single-purpose tools commonly
+      accept files at the root. The aigov root already omits file and output,
+      but leaf help uses FILEPATH and inconsistent OUTPUT or PATH metavariables;
+      PDF output is actually a directory, and Markdown help claims stdout while
+      the implementation derives and writes a sibling .md file.
+    evidence:
+      - "cargo run -q -- --help and per-command --help"
+      - "git -h, cargo help, rg --help, sips --help, textutil -help, plutil -help, mdls, ditto"
+      - "https://docs.rs/clap/latest/clap/_derive/_tutorial/index.html"
+      - "https://git-scm.com/docs/git-archive"
+      - "https://doc.rust-lang.org/cargo/commands/cargo.html"
+      - "https://docs.docker.com/reference/cli/docker/container/cp/"
+      - "https://pandoc.org/MANUAL.html"
+      - "https://www.gnu.org/prep/standards/html_node/Command_002dLine-Interfaces"
+    status: resolved

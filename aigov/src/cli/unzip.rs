@@ -7,23 +7,24 @@ use zip::ZipArchive;
 
 #[derive(Args)]
 pub struct UnzipArgs {
-    #[arg(short, long)]
+    /// Output directory; if not provided, file will be extracted to a subfolder with the same name as the file
+    #[arg(short, long, value_name = "DIR")]
     pub output: Option<PathBuf>,
 }
 
 /// Unzip a office and store its contents in a subfolder
 pub fn run(command: &FileCommand<UnzipArgs>) -> error::Result<()> {
-    let file = File::open(&command.filepath)?;
+    let file = File::open(&command.input)?;
     let mut archive = ZipArchive::new(file)?;
     let output_directory = command
         .args
         .output
         .clone()
-        .unwrap_or_else(|| command.filepath.with_extension(""));
+        .unwrap_or_else(|| command.input.with_extension(""));
 
     archive.extract(&output_directory)?;
 
-    let filepath = command.filepath.to_string_lossy();
+    let filepath = command.input.to_string_lossy();
     super::print_success(format!("Package unzipped: {filepath}"));
 
     Ok(())
@@ -70,7 +71,7 @@ mod tests {
         fs::write(&source, bytes.into_inner()).unwrap();
 
         let command = FileCommand {
-            filepath: source,
+            input: source,
             args: UnzipArgs { output: None },
         };
         run(&command).unwrap();
@@ -81,6 +82,6 @@ mod tests {
         );
 
         fs::remove_dir_all(output).unwrap();
-        fs::remove_file(&command.filepath).unwrap();
+        fs::remove_file(&command.input).unwrap();
     }
 }

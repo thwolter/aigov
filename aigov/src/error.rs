@@ -13,16 +13,17 @@ use ooxml::error::OoxmlError;
 ///
 /// ```
 /// use aigov::error::{OfficeError, Result};
-/// use std::path::Path;
+/// use ooxml::error::OoxmlError;
+/// use std::path::Path;///
 ///
 /// fn open_document(path: &Path) -> Result<()> {
-///     match aigov::package::OoxmlPackage::from_file(path) {
+///     match ooxml::OoxmlPackage::from_file(path) {
 ///         Ok(_) => Ok(()),
-///         Err(OfficeError::Io(error)) => {
+///         Err(OoxmlError::Io(error)) => {
 ///             eprintln!("could not open document: {error}");
 ///             Err(OfficeError::Io(error))
 ///         }
-///         Err(error) => Err(error),
+///         Err(error) => Err(OfficeError::from(error)),
 ///     }
 /// }
 /// # let _ = open_document;

@@ -10,20 +10,20 @@ use std::io::IsTerminal;
 use std::path::{Path, PathBuf};
 
 use aigov::error;
-use clap::{Args, CommandFactory, Parser, Subcommand};
+use clap::{Args, Parser, Subcommand};
 
 use indicatif::{ProgressBar, ProgressStyle};
 
 /// Doc comment
 #[derive(Parser)]
-#[command(version, about, long_about = None)]
-pub struct Cli {
+#[command(version, about, long_about = None, subcommand_required = true)]
+struct Cli {
     #[command(subcommand)]
     command: Option<Commands>,
 }
 
 #[derive(Subcommand)]
-pub enum Commands {
+enum Commands {
     /// Unzip a office document and store its contents.
     Unzip(FileCommand<unzip::UnzipArgs>),
 
@@ -55,23 +55,18 @@ pub enum Commands {
 
 #[derive(Args)]
 #[command(arg_required_else_help = true)]
-pub struct FileCommand<T: Args> {
-    #[arg(value_name = "FILEPATH")]
-    pub filepath: PathBuf,
+pub(crate) struct FileCommand<T: Args> {
+    #[arg(value_name = "FILE", help = "Path to the document")]
+    input: PathBuf,
 
     #[command(flatten)]
-    pub args: T,
+    args: T,
 }
 
-pub fn run() -> error::Result<()> {
+pub(crate) fn run() -> error::Result<()> {
     let cli_args = Cli::parse();
 
-    let Some(command) = cli_args.command.as_ref() else {
-        Cli::command().print_help()?;
-        std::process::exit(1);
-    };
-
-    match command {
+    match cli_args.command.as_ref().unwrap() {
         Commands::Unzip(command) => unzip::run(command),
         Commands::Metadata(command) => metadata::run(command),
         Commands::Pdf(command) => pdf::run(command),
@@ -128,7 +123,7 @@ mod tests {
     }
 }
 
-pub(crate) fn print_success(message: impl std::fmt::Display) {
+fn print_success(message: impl std::fmt::Display) {
     if io::stdout().is_terminal() {
         println!("\x1b[32m✓ {message}\x1b[0m");
     } else {
@@ -136,7 +131,7 @@ pub(crate) fn print_success(message: impl std::fmt::Display) {
     }
 }
 
-pub(crate) fn print_warning(message: impl std::fmt::Display) {
+fn print_warning(message: impl std::fmt::Display) {
     if io::stdout().is_terminal() {
         println!("\x1b[33m⚠ {message}\x1b[0m");
     } else {

@@ -39,7 +39,7 @@ impl ReplaceArgs {
     }
 }
 
-pub fn run(command: &FileCommand<ReplaceArgs>) -> error::Result<()> {
+pub(crate) fn run(command: &FileCommand<ReplaceArgs>) -> error::Result<()> {
     let args = &command.args;
     let (Some(search), Some(replacement)) = (args.search.as_deref(), args.replace.as_deref())
     else {
@@ -50,8 +50,8 @@ pub fn run(command: &FileCommand<ReplaceArgs>) -> error::Result<()> {
         return Ok(());
     };
 
-    let mut document = Document::from_file(&command.filepath)?;
-    let output = args.output.as_deref().unwrap_or(&command.filepath);
+    let mut document = Document::from_file(&command.input)?;
+    let output = args.output.as_deref().unwrap_or(&command.input);
     let options = args.options();
 
     let count = document.replace_text(search, replacement, options)?;

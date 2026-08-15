@@ -142,3 +142,36 @@ observations:
     promoted_to: null
     crystallized_via: null
     stale: false
+  - id: O14
+    timestamp: "2026-08-15T17:08"
+    provenance: ai-suggested
+    content: "In a subcommand CLI, an input or output argument should live on the lowest command node whose operation requires it; root arguments should be reserved for behavior that is genuinely global across the command tree."
+    context: "Established command-tree and single-purpose CLIs were compared with aigov's generated help."
+    potential_type: heuristic
+    bound_to: [N25, N26]
+    promoted: false
+    promoted_to: null
+    crystallized_via: null
+    stale: false
+  - id: O15
+    timestamp: "2026-08-15T17:08"
+    provenance: ai-suggested
+    content: "For a file-only input, use input as the internal role name and FILE as the user-facing metavar; use PATH only when both files and directories are accepted, DIR for directories, and avoid FILEPATH."
+    context: "The current shared FileCommand field is filepath and renders as FILEPATH, while output metavariables vary between OUTPUT and PATH."
+    potential_type: heuristic
+    bound_to: [N25, N26]
+    promoted: false
+    promoted_to: null
+    crystallized_via: null
+    stale: false
+  - id: O16
+    timestamp: "2026-08-15T17:08"
+    provenance: ai-suggested
+    content: "Mutating document commands should require an explicit destination choice such as --output FILE or --in-place; overwrite permission for an existing destination is a separate collision policy."
+    context: "Current replace, metadata set, and most policy mutations can silently save over the input when --output is absent or unavailable."
+    potential_type: constraint
+    bound_to: [N25, N26]
+    promoted: false
+    promoted_to: null
+    crystallized_via: null
+    stale: false

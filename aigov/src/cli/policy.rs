@@ -90,8 +90,8 @@ pub fn run(command: &FileCommand<PolicyArgs>) -> error::Result<()> {
             .print_help()?;
         return Ok(());
     };
-    let mut document = Document::from_file(&command.filepath)?;
-    let output = output_path(command.filepath.as_path(), policy_command);
+    let mut document = Document::from_file(&command.input)?;
+    let output = output_path(command.input.as_path(), policy_command);
 
     {
         let Some(policy_document) = document.as_ai_policy_document() else {

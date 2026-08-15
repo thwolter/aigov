@@ -1,0 +1,66 @@
+session:
+  id: "2026-08-15_001"
+  date: "2026-08-15"
+  started: "2026-08-15T17:08"
+  last_turn: "2026-08-15T17:08"
+  turn_count: 1
+  summary: "Compared CLI path and output conventions and staged an aigov help redesign."
+
+events_logged:
+  - turn: 1
+    type: question
+    id: N25
+    routing: direct
+    provenance: user
+    summary: "Opened file placement, output placement, and input naming design questions."
+  - turn: 1
+    type: experiment
+    id: N26
+    routing: direct
+    provenance: ai-executed
+    summary: "Compared aigov help with established command-tree and macOS utility conventions."
+  - turn: 1
+    type: observation
+    id: O14
+    routing: staged
+    provenance: ai-suggested
+    summary: "Place file and output arguments on the lowest command that requires them."
+  - turn: 1
+    type: observation
+    id: O15
+    routing: staged
+    provenance: ai-suggested
+    summary: "Use internal input with user-facing FILE, DIR, or PATH metavariables."
+  - turn: 1
+    type: observation
+    id: O16
+    routing: staged
+    provenance: ai-suggested
+    summary: "Separate mutation destination choice from overwrite collision policy."
+
+ai_actions:
+  - turn: 1
+    action: "Inspected current repository, generated help, local CLI help, and primary documentation without changing application code."
+    provenance: ai-executed
+    files_changed:
+      - "ara/trace/exploration_tree.yaml"
+      - "ara/staging/observations.yaml"
+      - "ara/trace/sessions/session_index.yaml"
+      - "ara/trace/pm_reasoning_log.yaml"
+      - "ara/trace/sessions/2026-08-15_001.yaml"
+
+claims_touched: []
+
+logic_revisions: []
+
+key_context:
+  - turn: 1
+    excerpt: "The user wants a general, sustainable CLI convention rather than preserving aigov's current implementation."
+
+open_threads:
+  - "User has not yet selected the proposed aigov command grammar and mutation destination policy."
+
+ai_suggestions_pending:
+  - "Keep input and output local to their owning leaf commands."
+  - "Use input internally and FILE, DIR, or PATH in generated help."
+  - "Require --output FILE or --in-place for mutations, with overwrite handled separately."

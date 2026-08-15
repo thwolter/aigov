@@ -115,9 +115,9 @@ impl CleanupMode {
 pub(crate) fn run_markdown(command: &FileCommand<MarkdownArgs>) -> error::Result<()> {
     let pb = create_spinner("Parsing document...");
 
-    let output = cli::output_path(&command.filepath, command.args.output.as_deref(), "md");
+    let output = cli::output_path(&command.input, command.args.output.as_deref(), "md");
 
-    let doc = undoc::parse_file(&command.filepath)?;
+    let doc = undoc::parse_file(&command.input)?;
     pb.set_message("Rendering to Markdown...");
 
     let heading_config = HeadingConfig::default().with_default_style_mapping();
