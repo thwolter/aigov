@@ -3,6 +3,11 @@ workspace = false
 command = "cargo"
 args = ["check"]
 
+[tasks.install]
+workspace = false
+command = "cargo"
+args = ["install", "--path", "crates/aigov", "--root", "${HOME}/.local"]
+
 [tasks.test]
 workspace = false
 command = "cargo"

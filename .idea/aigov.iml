@@ -2,9 +2,10 @@
 <module type="PYTHON_MODULE" version="4">
   <component name="NewModuleRootManager">
     <content url="file://$MODULE_DIR$">
-      <sourceFolder url="file://$MODULE_DIR$/aigov/src" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/aigov/tests" isTestSource="true" />
-      <sourceFolder url="file://$MODULE_DIR$/ooxml/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/aigov/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/aigov/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/ooxml/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/data" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>

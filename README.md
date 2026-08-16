@@ -11,6 +11,23 @@ Build and run the command-line tool from a checkout:
 cargo run -- report.docx metadata --pretty
 ```
 
+## Install
+
+Install the release build so that `aigov` is available from any directory:
+
+```sh
+cargo make install
+```
+
+The task installs to `~/.local/bin`. Add that directory to your `PATH` once:
+
+```sh
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zprofile
+source ~/.zprofile
+```
+
+Run `cargo make install` again after source changes to update the installed binary.
+
 Update metadata while preserving properties not named in the command:
 
 ```sh
@@ -72,6 +89,6 @@ cargo doc --no-deps
 
 ## Publishing
 
-Cargo includes this README on the package page because `aigov/Cargo.toml` declares
+Cargo includes this README on the package page because `crates/aigov/Cargo.toml` declares
 `readme = "README.md"`. Before publishing publicly, set the package `license`
 and `repository` fields (and `homepage`, `keywords`, and `categories` when they are known).

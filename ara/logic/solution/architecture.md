@@ -7,5 +7,5 @@
 - **Status**: active
 - **Provenance**: user-revised
 - **Evidence**: [N05, N06]
-- **Code refs**: [`../../../aigov/src/formats/docx/policy.rs`, `../../../aigov/src/formats/docx.rs`]
+- **Code refs**: [`../../../crates/aigov/src/formats/docx/policy.rs`, `../../../crates/aigov/src/formats/docx.rs`]
 - **Last revised**: 2026-08-11 (2026-08-11_001#5)
