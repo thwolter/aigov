@@ -86,3 +86,9 @@ entries:
     notes:
       - "Recorded N27 as an experiment because generated parser output demonstrated the empty-invocation precedence issue."
       - "Did not crystallize O16: the current uncommitted destination group establishes parser validation only; output persistence and user adoption remain unverified."
+  - turn: "2026-08-16_001#1"
+    notes:
+      - "Recorded the Clean Architecture question as N28 and the verified current dependency inspection as N29."
+      - "Staged O17 through O20 as unconfirmed architecture guidance; the user requested assessment but has not selected a refactor."
+      - "Did not crystallize any new observation because this turn supplied no affirmation, implementation commitment, or user-commented empirical resolution."
+      - "Marked O04 through O09 stale after three later session-days without a focused prompt-injection-policy revisit; retained O10 and O11 as current because this turn revisited CLI architecture."

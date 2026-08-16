@@ -42,7 +42,7 @@ observations:
     promoted: false
     promoted_to: null
     crystallized_via: null
-    stale: false
+    stale: true
   - id: O05
     timestamp: "2026-08-11T16:56"
     provenance: ai-suggested
@@ -53,7 +53,7 @@ observations:
     promoted: false
     promoted_to: null
     crystallized_via: null
-    stale: false
+    stale: true
   - id: O06
     timestamp: "2026-08-11T17:10"
     provenance: ai-suggested
@@ -64,7 +64,7 @@ observations:
     promoted: false
     promoted_to: null
     crystallized_via: null
-    stale: false
+    stale: true
   - id: O07
     timestamp: "2026-08-11T17:10"
     provenance: ai-suggested
@@ -75,7 +75,7 @@ observations:
     promoted: false
     promoted_to: null
     crystallized_via: null
-    stale: false
+    stale: true
   - id: O08
     timestamp: "2026-08-11T17:26"
     provenance: ai-suggested
@@ -86,7 +86,7 @@ observations:
     promoted: false
     promoted_to: null
     crystallized_via: null
-    stale: false
+    stale: true
   - id: O09
     timestamp: "2026-08-11T17:31"
     provenance: ai-suggested
@@ -97,7 +97,7 @@ observations:
     promoted: false
     promoted_to: null
     crystallized_via: null
-    stale: false
+    stale: true
   - id: O10
     timestamp: "2026-08-11T19:28"
     provenance: ai-suggested
@@ -171,6 +171,50 @@ observations:
     context: "Current replace, metadata set, and most policy mutations can silently save over the input when --output is absent or unavailable."
     potential_type: constraint
     bound_to: [N25, N26]
+    promoted: false
+    promoted_to: null
+    crystallized_via: null
+    stale: false
+  - id: O17
+    timestamp: "2026-08-16T10:17"
+    provenance: ai-suggested
+    content: "aigov should add a small application use-case boundary so CLI controllers translate arguments and present outcomes instead of owning open, mutate, destination, save, and no-change rules."
+    context: "The Clean Architecture review traced duplicated metadata, replacement, and policy command workflows."
+    potential_type: architecture
+    bound_to: [N28, N29]
+    promoted: false
+    promoted_to: null
+    crystallized_via: null
+    stale: false
+  - id: O18
+    timestamp: "2026-08-16T10:17"
+    provenance: ai-suggested
+    content: "Format-neutral inner APIs should not expose OOXML Metadata, PartName, OoxmlPackage, or adapter-specific errors; DOCX and OOXML code should translate these at the adapter boundary."
+    context: "OfficeDocument, ValidationIssue, OoxmlDocument, and OfficeError currently leak outer implementation types inward."
+    potential_type: architecture
+    bound_to: [N28, N29]
+    promoted: false
+    promoted_to: null
+    crystallized_via: null
+    stale: false
+  - id: O19
+    timestamp: "2026-08-16T10:17"
+    provenance: ai-suggested
+    content: "Keep ooxml as the package adapter and retain the Document enum for format dispatch until a second mutable format proves the need for a dynamic registry or repository abstraction."
+    context: "The review applied Clean Architecture's dependency rule while avoiding speculative indirection."
+    potential_type: heuristic
+    bound_to: [N28, N29]
+    promoted: false
+    promoted_to: null
+    crystallized_via: null
+    stale: false
+  - id: O20
+    timestamp: "2026-08-16T10:17"
+    provenance: ai-suggested
+    content: "If the Rust library and CLI remain independently supported products, a separate aigov-cli package should enforce CLI and driver dependencies outside the public library boundary."
+    context: "The current aigov package manifest combines the public library with Clap, progress UI, undoc, ZIP extraction, and external-process command concerns."
+    potential_type: architecture
+    bound_to: [N28, N29]
     promoted: false
     promoted_to: null
     crystallized_via: null

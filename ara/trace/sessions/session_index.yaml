@@ -20,3 +20,10 @@ sessions:
     events_count: 6
     claims_touched: []
     open_threads: 1
+  - id: "2026-08-16_001"
+    date: "2026-08-16"
+    summary: "Mapped the current repository to Clean Architecture and prioritized a focused use-case boundary."
+    turn_count: 1
+    events_count: 6
+    claims_touched: []
+    open_threads: 1

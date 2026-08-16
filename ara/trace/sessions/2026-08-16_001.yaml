@@ -1,0 +1,73 @@
+session:
+  id: "2026-08-16_001"
+  date: "2026-08-16"
+  started: "2026-08-16T10:17"
+  last_turn: "2026-08-16T10:17"
+  turn_count: 1
+  summary: "Mapped the current repository to Clean Architecture and prioritized a focused use-case boundary."
+
+events_logged:
+  - turn: 1
+    type: question
+    id: N28
+    routing: direct
+    provenance: user
+    summary: "Opened repository alignment with Robert C. Martin's Clean Architecture."
+  - turn: 1
+    type: experiment
+    id: N29
+    routing: direct
+    provenance: ai-executed
+    summary: "Verified the current checkout, dependency paths, build, and 31 library tests."
+  - turn: 1
+    type: observation
+    id: O17
+    routing: staged
+    provenance: ai-suggested
+    summary: "Add a focused application use-case boundary between CLI and document adapters."
+  - turn: 1
+    type: observation
+    id: O18
+    routing: staged
+    provenance: ai-suggested
+    summary: "Remove OOXML and driver types from format-neutral inner contracts."
+  - turn: 1
+    type: observation
+    id: O19
+    routing: staged
+    provenance: ai-suggested
+    summary: "Retain the package adapter and enum dispatch until more formats justify indirection."
+  - turn: 1
+    type: observation
+    id: O20
+    routing: staged
+    provenance: ai-suggested
+    summary: "Consider a separate CLI package to enforce the outer dependency boundary."
+
+ai_actions:
+  - turn: 1
+    action: "Inspected the authoritative master checkout, traced core command flows, and ran workspace check and library tests without changing product code."
+    provenance: ai-executed
+    files_changed:
+      - "ara/trace/exploration_tree.yaml"
+      - "ara/staging/observations.yaml"
+      - "ara/trace/pm_reasoning_log.yaml"
+      - "ara/trace/sessions/session_index.yaml"
+      - "ara/trace/sessions/2026-08-16_001.yaml"
+
+claims_touched: []
+
+logic_revisions: []
+
+key_context:
+  - turn: 1
+    excerpt: "The user requested a Clean Architecture assessment of the current repository, not implementation."
+
+open_threads:
+  - "The user has not selected or authorized an implementation phase for the proposed architecture changes."
+
+ai_suggestions_pending:
+  - "First centralize mutation workflows in a small application service and keep the CLI as a controller and presenter."
+  - "Then remove OOXML package and framework types from inner interfaces and errors."
+  - "Keep ooxml and enum-based format dispatch; defer registries and repository abstractions."
+  - "Split the CLI into its own package only if compiler-enforced separation is worth the packaging cost."

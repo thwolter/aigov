@@ -274,3 +274,32 @@ tree:
       - "aigov/src/cli/metadata.rs:27-73"
       - "https://docs.rs/clap/latest/clap/builder/struct.Command.html"
     status: resolved
+  - id: N28
+    type: question
+    title: "Clean Architecture alignment"
+    provenance: user
+    timestamp: "2026-08-16T10:17"
+    description: >
+      Which repository boundaries and responsibilities should change to align aigov
+      with Robert C. Martin's Clean Architecture?
+    status: open
+  - id: N29
+    type: experiment
+    title: "Current dependency-boundary inspection"
+    provenance: ai-executed
+    timestamp: "2026-08-16T10:17"
+    result: >
+      The authoritative master checkout builds successfully and all 31 workspace
+      library tests pass. Inspection found that CLI controllers own application
+      workflows and that nominally format-neutral interfaces expose OOXML package,
+      metadata, part-name, and adapter-error types.
+    evidence:
+      - "CARGO_TARGET_DIR=/private/tmp/aigov-clean-arch-review cargo check --workspace"
+      - "CARGO_TARGET_DIR=/private/tmp/aigov-clean-arch-review cargo test --workspace --lib"
+      - "crates/aigov/src/cli/metadata.rs"
+      - "crates/aigov/src/cli/policy.rs"
+      - "crates/aigov/src/cli/replace.rs"
+      - "crates/aigov/src/office/document.rs"
+      - "crates/aigov/src/document/validation.rs"
+      - "crates/aigov/src/error.rs"
+    status: resolved

@@ -6,6 +6,7 @@ args = ["check"]
 [tasks.install]
 workspace = false
 command = "cargo"
+toolchain = "stable"
 args = ["install", "--path", "crates/aigov", "--root", "${HOME}/.local"]
 
 [tasks.test]
