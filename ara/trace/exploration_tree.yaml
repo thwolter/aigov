@@ -303,3 +303,12 @@ tree:
       - "crates/aigov/src/document/validation.rs"
       - "crates/aigov/src/error.rs"
     status: resolved
+  - id: N30
+    type: question
+    title: "Metadata controller and use-case split"
+    provenance: user
+    timestamp: "2026-08-16T10:25"
+    description: >
+      Which responsibilities should remain in cli/metadata.rs and which should move
+      into the first Clean Architecture application use case?
+    status: open

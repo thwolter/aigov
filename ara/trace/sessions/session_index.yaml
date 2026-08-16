@@ -22,8 +22,8 @@ sessions:
     open_threads: 1
   - id: "2026-08-16_001"
     date: "2026-08-16"
-    summary: "Mapped the current repository to Clean Architecture and prioritized a focused use-case boundary."
-    turn_count: 1
-    events_count: 6
+    summary: "Mapped Clean Architecture boundaries and narrowed the first use case to metadata controller responsibilities."
+    turn_count: 2
+    events_count: 10
     claims_touched: []
-    open_threads: 1
+    open_threads: 2

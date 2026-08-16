@@ -46,9 +46,6 @@ enum Commands {
     #[command(visible_alias = "md")]
     Markdown(FileCommand<convert::MarkdownArgs>),
 
-    /// Convert a document to JSON
-    Json(FileCommand<convert::JsonArgs>),
-
     /// Extract resources (images, media) from a document
     Extract(FileCommand<convert::ExtractArgs>),
 }
@@ -95,7 +92,6 @@ pub(crate) fn run() -> error::Result<()> {
         Commands::Replace(command) => replace::run(command),
         Commands::Policy(command) => policy::run(command),
         Commands::Markdown(command) => convert::run_markdown(command),
-        Commands::Json(command) => convert::run_json(command),
         Commands::Extract(command) => convert::run_extract(command),
     }
 }

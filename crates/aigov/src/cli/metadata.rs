@@ -194,10 +194,10 @@ fn set_metadata(input: &Path, args: &SetArgs) -> error::Result<()> {
     MetadataPatch::from(args).apply_to(&mut metadata)?;
 
     ooxml::write_metadata(&mut package, &metadata)?;
-    package.save(args.destination.output_or(input))?;
+    let output = args.destination.output_or(input);
+    package.save(output)?;
 
-    let filepath = input.to_string_lossy();
-    super::print_success(format!("Metadata updated: {filepath}"));
+    super::print_success(format!("Metadata updated: {}", output.display()));
 
     Ok(())
 }

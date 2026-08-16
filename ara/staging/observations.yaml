@@ -219,3 +219,36 @@ observations:
     promoted_to: null
     crystallized_via: null
     stale: false
+  - id: O21
+    timestamp: "2026-08-16T10:25"
+    provenance: ai-suggested
+    content: "cli/metadata.rs should retain Clap argument definitions, CLI syntax parsing, application-request mapping, JSON presentation, and terminal messages while delegating document opening, metadata reads, patch precedence, mutation, destination resolution, and saving to an application use case."
+    context: "The user narrowed the Clean Architecture discussion to the first refactor of metadata.rs."
+    potential_type: architecture
+    bound_to: [N28, N29, N30]
+    promoted: false
+    promoted_to: null
+    crystallized_via: null
+    stale: false
+  - id: O22
+    timestamp: "2026-08-16T10:25"
+    provenance: ai-suggested
+    content: "Profile JSON loading and CLI-specific author, keyword, and NAME=VALUE parsing belong to the input adapter, but the rule that direct command options override profile values belongs to the metadata update use case."
+    context: "The current SetArgs conversion and set_metadata handler combine transport syntax with patch application order."
+    potential_type: heuristic
+    bound_to: [N29, N30]
+    promoted: false
+    promoted_to: null
+    crystallized_via: null
+    stale: false
+  - id: O23
+    timestamp: "2026-08-16T10:25"
+    provenance: ai-suggested
+    content: "The metadata update use case should return an outcome containing the actual destination and change state so the CLI can report the written file accurately and represent no-op behavior deliberately."
+    context: "The current success message always names the input path even when --output selects another file."
+    potential_type: architecture
+    bound_to: [N29, N30]
+    promoted: false
+    promoted_to: null
+    crystallized_via: null
+    stale: false

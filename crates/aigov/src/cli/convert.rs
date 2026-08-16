@@ -156,10 +156,6 @@ pub(crate) fn run_markdown(command: &FileCommand<MarkdownArgs>) -> error::Result
     Ok(())
 }
 
-pub(crate) fn run_json(_command: &FileCommand<JsonArgs>) -> error::Result<()> {
-    todo!()
-}
-
 pub(crate) fn run_extract(_command: &FileCommand<ExtractArgs>) -> error::Result<()> {
     todo!()
 }

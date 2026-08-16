@@ -2,9 +2,9 @@ session:
   id: "2026-08-16_001"
   date: "2026-08-16"
   started: "2026-08-16T10:17"
-  last_turn: "2026-08-16T10:17"
-  turn_count: 1
-  summary: "Mapped the current repository to Clean Architecture and prioritized a focused use-case boundary."
+  last_turn: "2026-08-16T10:25"
+  turn_count: 2
+  summary: "Mapped Clean Architecture boundaries and narrowed the first use case to metadata controller responsibilities."
 
 events_logged:
   - turn: 1
@@ -43,10 +43,43 @@ events_logged:
     routing: staged
     provenance: ai-suggested
     summary: "Consider a separate CLI package to enforce the outer dependency boundary."
+  - turn: 2
+    type: question
+    id: N30
+    routing: direct
+    provenance: user
+    summary: "Narrowed the architecture discussion to changes in cli/metadata.rs."
+  - turn: 2
+    type: observation
+    id: O21
+    routing: staged
+    provenance: ai-suggested
+    summary: "Keep metadata.rs as controller and presenter; move workflow orchestration inward."
+  - turn: 2
+    type: observation
+    id: O22
+    routing: staged
+    provenance: ai-suggested
+    summary: "Keep CLI syntax and profile transport parsing outside while moving patch precedence inward."
+  - turn: 2
+    type: observation
+    id: O23
+    routing: staged
+    provenance: ai-suggested
+    summary: "Return destination and change state from the update use case."
 
 ai_actions:
   - turn: 1
     action: "Inspected the authoritative master checkout, traced core command flows, and ran workspace check and library tests without changing product code."
+    provenance: ai-executed
+    files_changed:
+      - "ara/trace/exploration_tree.yaml"
+      - "ara/staging/observations.yaml"
+      - "ara/trace/pm_reasoning_log.yaml"
+      - "ara/trace/sessions/session_index.yaml"
+      - "ara/trace/sessions/2026-08-16_001.yaml"
+  - turn: 2
+    action: "Re-inspected cli/metadata.rs and refined the proposed controller, presenter, and metadata use-case responsibilities without changing product code."
     provenance: ai-executed
     files_changed:
       - "ara/trace/exploration_tree.yaml"
@@ -62,12 +95,17 @@ logic_revisions: []
 key_context:
   - turn: 1
     excerpt: "The user requested a Clean Architecture assessment of the current repository, not implementation."
+  - turn: 2
+    excerpt: "The user wants to discuss the first application-layer change specifically in metadata.rs before implementation."
 
 open_threads:
   - "The user has not selected or authorized an implementation phase for the proposed architecture changes."
+  - "The user has not yet selected the exact application request, outcome, or gateway shape for metadata operations."
 
 ai_suggestions_pending:
   - "First centralize mutation workflows in a small application service and keep the CLI as a controller and presenter."
   - "Then remove OOXML package and framework types from inner interfaces and errors."
   - "Keep ooxml and enum-based format dispatch; defer registries and repository abstractions."
   - "Split the CLI into its own package only if compiler-enforced separation is worth the packaging cost."
+  - "Keep metadata.rs responsible for CLI parsing and JSON presentation only."
+  - "Move profile precedence, document mutation, output resolution, and saving into a metadata application use case."

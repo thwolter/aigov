@@ -92,3 +92,8 @@ entries:
       - "Staged O17 through O20 as unconfirmed architecture guidance; the user requested assessment but has not selected a refactor."
       - "Did not crystallize any new observation because this turn supplied no affirmation, implementation commitment, or user-commented empirical resolution."
       - "Marked O04 through O09 stale after three later session-days without a focused prompt-injection-policy revisit; retained O10 and O11 as current because this turn revisited CLI architecture."
+  - turn: "2026-08-16_001#2"
+    notes:
+      - "Recorded the focused metadata boundary question as N30 and staged O21 through O23 as unconfirmed architecture guidance."
+      - "Did not crystallize O17: asking to discuss its first concrete application is a revisit, not explicit user affirmation or artifact commitment."
+      - "Kept JSON and CLI syntax parsing in the input adapter while assigning patch precedence and persistence to the use case; this avoids transport leakage without adding a broad repository abstraction."
