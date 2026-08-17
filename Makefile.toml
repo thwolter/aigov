@@ -27,3 +27,21 @@ args = ["fmt"]
 workspace = false
 command = "cargo"
 args = ["clippy", "--", "-D", "warnings"]
+
+[tasks.build-windows]
+workspace = false
+script = '''
+cargo build -r --target x86_64-pc-windows-gnu
+mkdir -p dist
+cp target/x86_64-pc-windows-gnu/release/aigov.exe dist/aigov.exe
+git add dist/aigov.exe
+'''
+
+[tasks.build-mac]
+workspace = false
+script = '''
+cargo build -r
+mkdir -p dist
+cp target/release/aigov dist/aigov
+git add dist/aigov
+'''
